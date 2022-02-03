@@ -148,6 +148,8 @@ const char* const gauss_filter_images = "gauss_filter_images";
 /// String parameter name
 const char* const time_average_cine_ref_frame = "time_average_cine_ref_frame";
 /// String parameter name
+const char* const time_average_video_ref_frame = "time_average_video_ref_frame";
+/// String parameter name
 const char* const gauss_filter_mask_size = "gauss_filter_mask_size";
 /// String parameter name
 const char* const correlation_routine = "correlation_routine";
@@ -684,6 +686,7 @@ enum Image_File_Type{
   NETCDF,
   CINE,
   BMP,
+  VIDEO,
   MAX_IMAGE_FILE_TYPE,
   NO_SUCH_IMAGE_FILE_TYPE
 };
@@ -1249,6 +1252,11 @@ const Correlation_Parameter time_average_cine_ref_frame_param(time_average_cine_
   false,
   "Select the number of frames over which to time average the reference frame of a cine file");
 /// Correlation parameter and properties
+const Correlation_Parameter time_average_video_ref_frame_param(time_average_video_ref_frame,
+  SIZE_PARAM,
+  false,
+  "Select the number of frames over which to time average the reference frame of a video file");
+/// Correlation parameter and properties
 const Correlation_Parameter compute_def_gradients_param(compute_def_gradients,
   BOOL_PARAM,
   false,
@@ -1283,7 +1291,7 @@ const Correlation_Parameter remove_outlier_pixels_param(remove_outlier_pixels,
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 90;
+const int_t num_valid_correlation_params = 91;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1365,6 +1373,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   convert_cine_to_8_bit_param,
   remove_outlier_pixels_param,
   time_average_cine_ref_frame_param,
+  time_average_video_ref_frame_param,
   global_regularization_alpha_param,
   global_stabilization_tau_param,
   global_formulation_param,

@@ -63,25 +63,26 @@ std::string netcdf_file_name(const char * decorated_netcdf_file){
     return netcdf_string;
   }
   std::string file_name = netcdf_string.substr(0,found);
-  // add the .cine extension back
+  // add the .nc extension back
   file_name+=".nc";
   return file_name;
 }
 
 DICE_LIB_DLL_EXPORT
-std::string cine_file_name(const char * decorated_cine_file){
-  std::string cine_string(decorated_cine_file);
+std::string video_file_name(const char * decorated_video_file){
+  std::string video_string(decorated_video_file);
   // trim off the last underscore and the rest
-  size_t found = cine_string.find_last_of("_");
+  size_t found = video_string.find_last_of("_");
   std::string file_name;
   if(found==std::string::npos||
-      (!std::isdigit(*(cine_string.substr(found+1).begin()))&&*(cine_string.substr(found+1).begin())!='-'&&cine_string.substr(found+1,3)!="avg")){
-    file_name = cine_string;
+      (!std::isdigit(*(video_string.substr(found+1).begin()))&&*(video_string.substr(found+1).begin())!='-'&&video_string.substr(found+1,3)!="avg")){
+    file_name = video_string;
   }else{
-    file_name = cine_string.substr(0,found);
+    file_name = video_string.substr(0,found);
   }
-  // add the .cine extension back
-  file_name+=".cine";
+  // add the .video extension back
+  const std::string ext = video_string.substr(video_string.find_last_of("."));
+  file_name+=ext;
   return file_name;
 }
 
@@ -99,32 +100,32 @@ int_t netcdf_index(const char * decorated_netcdf_file){
 }
 
 DICE_LIB_DLL_EXPORT
-void cine_index(const char * decorated_cine_file,
+void video_index(const char * decorated_video_file,
   int_t & start_index,
   int_t & end_index,
   bool & is_avg){
   end_index = -1;
   is_avg = false;
-  std::string cine_string(decorated_cine_file);
+  std::string video_string(decorated_video_file);
   // trim off the last underscore and the rest
-  size_t found = cine_string.find_last_of("_");
-  std::string tail = cine_string.substr(found);
-  //DEBUG_MSG("cine_index(): tail: " << tail);
+  size_t found = video_string.find_last_of("_");
+  std::string tail = video_string.substr(found);
+  //DEBUG_MSG("video_index(): tail: " << tail);
   // determine if this is an average image
   size_t found_avg = tail.find("avg");
-  size_t found_ext = tail.find(".cine");
-  //DEBUG_MSG("cine_index(): found average at position: " << found_avg);
+  size_t found_ext = tail.find_last_of(".");
+  //DEBUG_MSG("video_index(): found average at position: " << found_avg);
   if(found_avg==std::string::npos){
     assert(found_ext!=std::string::npos);
     std::string index_str = tail.substr(1,found_ext-1);
-    //DEBUG_MSG("cine_index(): index_str: " << index_str);
+    //DEBUG_MSG("video_index(): index_str: " << index_str);
     start_index = std::strtol(index_str.c_str(),NULL,0);
   }
   else{
     size_t found_dash = tail.find("to");
     std::string first_num_str = tail.substr(found_avg+3,found_dash-found_avg-3);
     std::string second_num_str = tail.substr(found_dash+2,found_ext-found_dash-2);
-    //DEBUG_MSG("cine_index(): first num " << first_num_str << " second num " << second_num_str);
+    //DEBUG_MSG("found_index(): first num " << first_num_str << " second num " << second_num_str);
     start_index = std::strtol(first_num_str.c_str(),NULL,0);
     end_index = std::strtol(second_num_str.c_str(),NULL,0);
     is_avg = true;
@@ -168,6 +169,10 @@ Image_File_Type image_file_type(const char * file_name){
   const std::string nc(".nc");
   if(file_str.find(nc)!=std::string::npos)
     return NETCDF;
+  const std::string avi(".avi");
+  const std::string mp4(".mp4");
+  if(file_str.find(avi)!=std::string::npos||file_str.find(mp4)!=std::string::npos)
+    return VIDEO;
   return file_type;
 }
 
@@ -186,10 +191,10 @@ void read_image_dimensions(const char * file_name,
   if(file_type==RAWI){
     read_rawi_image_dimensions(file_name,width,height);
   }
-  else if(file_type==CINE){
-    const std::string cine_file = cine_file_name(file_name);
-    DEBUG_MSG("read_image_dimensions(): cine file name: " << cine_file);
-    DICe::utils::HyperCine_Singleton::instance().image_dimensions(cine_file,width,height);
+  else if(file_type==CINE||file_type==VIDEO){
+    const std::string video_file = video_file_name(file_name);
+    DEBUG_MSG("read_image_dimensions(): video file name: " << video_file);
+    DICe::utils::Video_Singleton::instance().image_dimensions(video_file,width,height);
     assert(width>0);
     assert(height>0);
   }
@@ -274,6 +279,51 @@ void read_image(const char * file_name,
     }
     read_rawi_image(file_name,intensities.getRawPtr(),layout_right);
   }
+  else if(file_type==VIDEO){
+    const std::string video_file = video_file_name(file_name);
+    DEBUG_MSG("utils::read_image(): intensity values deep copied from VideoCapture object");
+    DEBUG_MSG("utils::read_image(): video file name: " << video_file);
+    int_t end_index = -1;
+    int_t start_index =-1;
+    bool is_avg = false;
+    video_index(file_name,start_index,end_index,is_avg);
+    if(end_index<0) end_index = start_index;
+    Teuchos::RCP<cv::VideoCapture> vc = DICe::utils::Video_Singleton::instance().video_capture(video_file);
+    width = sub_w==0?(int_t)vc->get(cv::CAP_PROP_FRAME_WIDTH):sub_w;
+    height = sub_h==0?(int_t)vc->get(cv::CAP_PROP_FRAME_HEIGHT):sub_h;
+    if(intensities.size()==0)
+      intensities = Teuchos::ArrayRCP<S>(width*height,0.0);
+    for(int_t i=0;i<width*height;++i)
+      intensities[i] = 0.0;
+    if(is_avg){
+      TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_width),std::runtime_error,"no sub images allowed for avg frame");
+      TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_height),std::runtime_error,"no sub images allowed for avg frame");
+      TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_offset_x),std::runtime_error,"no sub images allowed for avg frame");
+      TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(subimage_offset_y),std::runtime_error,"no sub images allowed for avg frame");
+    }
+    const int_t num_frames = end_index - start_index + 1;
+    DEBUG_MSG("utils::read_image(): video file num_frames to average: " << num_frames);
+    for(int_t i=start_index;i<=end_index;++i){
+      vc->set(cv::CAP_PROP_POS_FRAMES,i);
+      cv::Mat frame;
+      if(!vc->read(frame)||frame.empty()){
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"read image from video capture failed, frame " << i);
+      }
+      if(frame.channels()!=1)
+        cv::cvtColor(frame,frame,cv::COLOR_BGR2GRAY);
+      frame.convertTo(frame, CV_8UC1);
+      for(int_t y=0;y<height;++y){
+        for(int_t x=0;x<width;++x){
+          intensities[y*width + x] += frame.at<uchar>(y,x);
+        }
+      }
+    } // end avg loop
+    for(int_t y=0;y<height;++y){
+      for(int_t x=0;x<width;++x){
+        intensities[y*width + x] /= num_frames;
+      }
+    }
+  } // end video frame
   else if(file_type==CINE){
     bool filter_failed_pixels = true;
     bool convert_to_8_bit = true;
@@ -290,18 +340,18 @@ void read_image(const char * file_name,
     DEBUG_MSG("utils::read_image(): filter_failed_pixels: " << filter_failed_pixels);
     DEBUG_MSG("utils::read_image(): convert_to_8_bit: " << convert_to_8_bit);
     DEBUG_MSG("utils::read_image(): reinit: " << reinit);
-    const std::string cine_file = cine_file_name(file_name);
+    const std::string cine_file = video_file_name(file_name);
     DEBUG_MSG("utils::read_image(): cine file name: " << cine_file);
     int_t end_index = -1;
     int_t start_index =-1;
     bool is_avg = false;
-    cine_index(file_name,start_index,end_index,is_avg);
+    video_index(file_name,start_index,end_index,is_avg);
     // get the image dimensions
     Teuchos::RCP<hypercine::HyperCine> hc;
     if(convert_to_8_bit)
-      hc = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_file,hypercine::HyperCine::TO_8_BIT);
+      hc = DICe::utils::Video_Singleton::instance().hypercine(cine_file,hypercine::HyperCine::TO_8_BIT);
     else
-      hc = DICe::utils::HyperCine_Singleton::instance().hypercine(cine_file);
+      hc = DICe::utils::Video_Singleton::instance().hypercine(cine_file);
     width = sub_w==0?hc->width():sub_w;
     height = sub_h==0?hc->height():sub_h;
     if(is_avg){
@@ -655,8 +705,10 @@ cv::Mat read_image(const char * file_name){
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
   if(image_file_type(file_name)==CINE){
     //params->set(spread_intensity_histogram,true);
-    params->set(filter_failed_cine_pixels,true);
-    params->set(convert_cine_to_8_bit,true);
+    if(image_file_type(file_name)==CINE){
+      params->set(filter_failed_cine_pixels,true);
+      params->set(convert_cine_to_8_bit,true);
+    }
     int_t width = 0;
     int_t height = 0;
     read_image_dimensions(file_name,width,height);
@@ -670,7 +722,28 @@ cv::Mat read_image(const char * file_name){
       }
     }
     return img;
-  }else{
+  }else if(image_file_type(file_name)==VIDEO){
+    const std::string video_file = video_file_name(file_name);
+    DEBUG_MSG("utils::read_image(): video file name: " << video_file);
+    int_t end_index = -1;
+    int_t start_index =-1;
+    bool is_avg = false;
+    video_index(file_name,start_index,end_index,is_avg);
+    if(is_avg){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"avg frame not implemented for video files");
+    }
+    Teuchos::RCP<cv::VideoCapture> vc = DICe::utils::Video_Singleton::instance().video_capture(video_file);
+    vc->set(cv::CAP_PROP_POS_FRAMES,start_index);
+    cv::Mat frame;
+    if(!vc->read(frame)||frame.empty()){
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"read image from video capture failed, frame " << start_index);
+    }
+    if(frame.channels()!=1)
+      cv::cvtColor(frame,frame,cv::COLOR_BGR2GRAY);
+    frame.convertTo(frame, CV_8UC1);
+    return frame;
+  }
+  else{
     cv::Mat image = cv::imread(file_name,cv::IMREAD_GRAYSCALE);
     if (image.empty()) {
       DEBUG_MSG("utils::read_image(): image is empty, it could have unicode characters in the name so trying to read with a buffer instead");
@@ -790,53 +863,100 @@ DICE_LIB_DLL_EXPORT
 void write_image(const char *,const int_t,const int_t,scalar_t *,const bool);
 
 Teuchos::RCP<hypercine::HyperCine>
-HyperCine_Singleton::hypercine(const std::string & id,
+Video_Singleton::hypercine(const std::string & id,
   hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type){
   if(hypercine_map_.find(std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>(id,conversion_type))==hypercine_map_.end()){
-    DEBUG_MSG("HyperCine_Singleton::hypercine(): insering a new HyperCine for file " << id << " conversion type " << conversion_type);
+    DEBUG_MSG("Video_Singleton::hypercine(): insering a new HyperCine for file " << id << " conversion type " << conversion_type);
     Teuchos::RCP<hypercine::HyperCine> hypercine = Teuchos::rcp(new hypercine::HyperCine(id.c_str(),conversion_type));
     hypercine_map_.insert(std::pair<std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>,Teuchos::RCP<hypercine::HyperCine> >
     (std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>(id,conversion_type),hypercine));
     return hypercine;
-  }
-  else{
-    DEBUG_MSG("HyperCine_Singleton::hypercine(): reusing HyperCine for file " << id << " conversion type " << conversion_type);
+  }else{
+    DEBUG_MSG("Video_Singleton::hypercine(): reusing HyperCine for file " << id << " conversion type " << conversion_type);
     return hypercine_map_.find(std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>(id,conversion_type))->second;
   }
 }
 
-void
-HyperCine_Singleton::image_dimensions(const std::string & id, int_t & width, int_t & height)const{
-  std::map<std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>,Teuchos::RCP<hypercine::HyperCine> >::const_iterator it = hypercine_map_.begin();
-  for(;it!=hypercine_map_.end();++it){
-    if(it->first.first==id){
-      DEBUG_MSG("HyperCine_Singleton::image_dimensions(): using dims from existing hypercine " << id);
-      width = it->second->width();
-      height = it->second->height();
-      return;
-    }
+Teuchos::RCP<cv::VideoCapture>
+Video_Singleton::video_capture(const std::string & id){
+  if(video_capture_map_.find(id)==video_capture_map_.end()){
+    DEBUG_MSG("Video_Singleton::video_capture(): insering a new VideoCapture for file " << id );
+    Teuchos::RCP<cv::VideoCapture> vc = Teuchos::rcp(new cv::VideoCapture(id));
+    video_capture_map_.insert(std::pair<std::string,Teuchos::RCP<cv::VideoCapture> >(id,vc));
+    return vc;
+  }else{
+    DEBUG_MSG("Video_Singleton::video_capture(): reusing VideoCapture for file " << id);
+    return video_capture_map_.find(id)->second;
   }
-  // no matching (by name) hypercine objects found
-  hypercine::HyperCine hc(id.c_str());
-  width = hc.width();
-  height = hc.height();
 }
 
 DICE_LIB_DLL_EXPORT
-int_t cine_file_frame_count(const std::string & cine_name){
-  return DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name)->file_frame_count();
+bool is_cine_file(const std::string & file_name){
+  // check if the file is cine or mp4 or throw an exception
+  if(file_name.substr(file_name.find_last_of(".") + 1) == "cine" || file_name.substr(file_name.find_last_of(".") + 1) == "CINE")
+    return true;
+  else
+    return false;
+}
+
+void
+Video_Singleton::image_dimensions(const std::string & id, int_t & width, int_t & height)const{
+  if(is_cine_file(id)){
+    std::map<std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>,Teuchos::RCP<hypercine::HyperCine> >::const_iterator it = hypercine_map_.begin();
+    for(;it!=hypercine_map_.end();++it){
+      if(it->first.first==id){
+        DEBUG_MSG("Video_Singleton::image_dimensions(): using dims from existing hypercine " << id);
+        width = it->second->width();
+        height = it->second->height();
+        return;
+      }
+    }
+    // no matching (by name) hypercine objects found
+    hypercine::HyperCine hc(id.c_str());
+    width = hc.width();
+    height = hc.height();
+  }
+  else{
+    std::map<std::string,Teuchos::RCP<cv::VideoCapture> >::const_iterator it = video_capture_map_.begin();
+    for(;it!=video_capture_map_.end();++it){
+      if(it->first==id){
+        DEBUG_MSG("Video_Singleton::image_dimensions(): using dims from existing VideoCapture " << id);
+        TEUCHOS_TEST_FOR_EXCEPTION(!it->second->isOpened(),std::runtime_error,"video file is not open, but should be");
+        width = (int_t)it->second->get(cv::CAP_PROP_FRAME_WIDTH);
+        height = (int_t)it->second->get(cv::CAP_PROP_FRAME_HEIGHT);
+        return;
+      }
+    }
+    // no matching (by name) video objects found
+    cv::VideoCapture cap(id);
+    width = (int_t)cap.get(cv::CAP_PROP_FRAME_WIDTH);
+    height = (int_t)cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+  }
+}
+
+DICE_LIB_DLL_EXPORT
+int_t video_file_frame_count(const std::string & video_name){
+  if(is_cine_file(video_name))
+    return DICe::utils::Video_Singleton::instance().hypercine(video_name)->file_frame_count();
+  else{
+    return (int_t)(DICe::utils::Video_Singleton::instance().video_capture(video_name)->get(cv::CAP_PROP_FRAME_COUNT));
+  }
 };
 
 DICE_LIB_DLL_EXPORT
-int_t cine_file_first_frame_id(const std::string & cine_name){
-  return DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name)->file_first_frame_id();
+int_t video_file_first_frame_id(const std::string & cine_name){
+  if(is_cine_file(cine_name))
+    return DICe::utils::Video_Singleton::instance().hypercine(cine_name)->file_first_frame_id();
+  else{
+    return 0;
+  }
 };
 
 DICE_LIB_DLL_EXPORT
 void cine_file_read_buffer(const std::string & cine_name,
   const hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type,
   hypercine::HyperCine::HyperFrame & hf){
-  DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name,conversion_type)->read_buffer(hf);
+  DICe::utils::Video_Singleton::instance().hypercine(cine_name,conversion_type)->read_buffer(hf);
 }
 
 DICE_LIB_DLL_EXPORT
@@ -844,8 +964,8 @@ void cine_file_read_buffer(const std::string & cine_name,
   const hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type,
   const int_t frame,
   const int_t count){
-  DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name,conversion_type)->hyperframe()->update_frames(frame,count);
-  DICe::utils::HyperCine_Singleton::instance().hypercine(cine_name,conversion_type)->read_buffer();
+  DICe::utils::Video_Singleton::instance().hypercine(cine_name,conversion_type)->hyperframe()->update_frames(frame,count);
+  DICe::utils::Video_Singleton::instance().hypercine(cine_name,conversion_type)->read_buffer();
 }
 
 

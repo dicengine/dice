@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(fileName);
+  Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::Video_Singleton::instance().hypercine(fileName);
 
   *outStream << "\nCine read successfully\n" << std::endl;
 

@@ -218,12 +218,12 @@ Schema::set_def_image(const std::string & defName){
   const int_t num_buffer_frames = !has_extents_ || has_motion_window ? CINE_BUFFER_NUM_FRAMES : 1; // the extents update after each frame so can only put one frame in the buffer
   if((frame_id_-first_frame_id_)%num_buffer_frames==0){
     if(DICe::utils::image_file_type(defName.c_str())==CINE){
-      std::string undecorated_cine_file = DICe::utils::cine_file_name(defName.c_str());
+      std::string undecorated_cine_file = DICe::utils::video_file_name(defName.c_str());
       // test if this is a cross-correlation (if so, don't use a buffer since only one frame is needed)
       // if it is a cross-correlation setting the def image, the ref and def images will come from different files
       // hence the check below on the cine file name
       assert(ref_img_!=Teuchos::null);
-      std::string undecorated_ref_cine_file = DICe::utils::cine_file_name(ref_img_->file_name().c_str());
+      std::string undecorated_ref_cine_file = DICe::utils::video_file_name(ref_img_->file_name().c_str());
       if(undecorated_cine_file==undecorated_ref_cine_file){ // assumes ref image has already been set
         // check if the window params are already set and just the frame needs to be updated
         const hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type = convert_cine_to_8_bit_ ? hypercine::HyperCine::TO_8_BIT :

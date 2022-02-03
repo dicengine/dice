@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
   }
   std::string fileName = argv[1];
   *outStream << "Cine file name: " << fileName << std::endl;
-  Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(fileName,hypercine::HyperCine::TO_8_BIT);
+  Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::Video_Singleton::instance().hypercine(fileName,hypercine::HyperCine::TO_8_BIT);
   *outStream << "\nCine read successfully\n" << std::endl;
 
   const int_t num_images = hc->file_frame_count();

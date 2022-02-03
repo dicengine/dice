@@ -405,7 +405,7 @@ public:
     return has_gradients_;
   }
 
-  /// returns true if the image is a frame from a video sequence cine or netcdf file
+  /// returns true if the image is a frame from a video sequence file
   bool is_video_frame()const;
 
   /// returns true if the image was created from a file not array

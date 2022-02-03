@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
     full_name << "./images/" << cine_files[i] << ".cine";
     *outStream << "testing cine file: " << full_name.str() << std::endl;
 
-    Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::HyperCine_Singleton::instance().hypercine(full_name.str());
+    Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::Video_Singleton::instance().hypercine(full_name.str());
     if(hc->file_frame_count()!=6){
       *outStream << "Error, the number of frames is not correct, should be 6 is " << hc->file_frame_count() << std::endl;
       errorFlag++;
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
 
   bool exception_thrown = false;
   try{
-    Teuchos::RCP<hypercine::HyperCine> invalid_color = DICe::utils::HyperCine_Singleton::instance().hypercine("./images/invalid_color.cine");
+    Teuchos::RCP<hypercine::HyperCine> invalid_color = DICe::utils::Video_Singleton::instance().hypercine("./images/invalid_color.cine");
   }
   catch(...){
     exception_thrown = true;
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
 
   *outStream << "testing reading a set of sub regions from a 10 bit cine " << std::endl;
 
-  Teuchos::RCP<hypercine::HyperCine> hc2 = DICe::utils::HyperCine_Singleton::instance().hypercine("./images/packed_12bpp.cine");
+  Teuchos::RCP<hypercine::HyperCine> hc2 = DICe::utils::Video_Singleton::instance().hypercine("./images/packed_12bpp.cine");
   std::stringstream win_frame;
   win_frame << "./images/packed_12bpp_" << hc2->file_first_frame_id() << ".cine";
   Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
@@ -225,7 +225,7 @@ int main(int argc, char *argv[]) {
   *outStream << "motion window values have been checked" << std::endl;
 
   *outStream << "testing reading a set of sub regions from an 8 bit cine " << std::endl;
-  Teuchos::RCP<hypercine::HyperCine> hc8 = DICe::utils::HyperCine_Singleton::instance().hypercine("./images/phantom_v1610.cine");
+  Teuchos::RCP<hypercine::HyperCine> hc8 = DICe::utils::Video_Singleton::instance().hypercine("./images/phantom_v1610.cine");
   const int_t frame_5_index = 5 + hc8->file_first_frame_id();
   std::stringstream file_name_8;
   file_name_8 << "./images/phantom_v1610_" << frame_5_index << ".cine";
@@ -257,7 +257,7 @@ int main(int argc, char *argv[]) {
   *outStream << "8 bit motion window values have been checked" << std::endl;
 
   *outStream << "testing reading a set of sub regions from an 16 bit cine " << std::endl;
-  Teuchos::RCP<hypercine::HyperCine> hc16 = DICe::utils::HyperCine_Singleton::instance().hypercine("./images/phantom_v1610_16bpp.cine");
+  Teuchos::RCP<hypercine::HyperCine> hc16 = DICe::utils::Video_Singleton::instance().hypercine("./images/phantom_v1610_16bpp.cine");
   std::stringstream file_name_16;
   file_name_16 << "./images/phantom_v1610_16bpp_" << 5 + hc16->file_first_frame_id() << ".cine";
   imgParams->set(DICe::subimage_width,128-95+1);
@@ -299,7 +299,7 @@ int main(int argc, char *argv[]) {
   int_t end_index = 0;
   int_t start_index = 0;
   bool is_avg = false;
-  DICe::utils::cine_index("./images/phantom_v1610_16bpp_avg-345to-12.cine",start_index,end_index,is_avg);
+  DICe::utils::video_index("./images/phantom_v1610_16bpp_avg-345to-12.cine",start_index,end_index,is_avg);
   *outStream << "decypher cine index range start " << start_index << " end " << end_index << std::endl;
   if(start_index!=-345||end_index!=-12){
     *outStream << "Error, the image indices are not correct" << std::endl;
@@ -310,7 +310,7 @@ int main(int argc, char *argv[]) {
     errorFlag++;
   }
 
-  DICe::utils::cine_index("./images/phantom_v1610_16bpp_23.cine",start_index,end_index,is_avg);
+  DICe::utils::video_index("./images/phantom_v1610_16bpp_23.cine",start_index,end_index,is_avg);
   *outStream << "decypher cine index range start " << start_index << " end " << end_index << std::endl;
   if(start_index!=23||end_index!=-1){
     *outStream << "Error, the image indices are not correct" << std::endl;

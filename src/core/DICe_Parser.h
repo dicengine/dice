@@ -127,25 +127,39 @@ const char* const stereo_left_suffix = "stereo_left_suffix";
 /// Input parameter
 const char* const stereo_right_suffix = "stereo_right_suffix";
 /// Input parameter
-const char* const stereo_cine_file = "stereo_cine_file";
-/// Input parameter
 const char* const stereo_reference_image = "stereo_reference_image";
 /// Input parameter
 const char* const stereo_deformed_images = "stereo_deformed_images";
 /// Input parameter
 const char* const netcdf_file = "netcdf_file";
 /// Input parameter
-const char* const cine_file = "cine_file";
+const char* const stereo_video_file = "stereo_video_file";
 /// Input parameter
-const char* const cine_ref_index = "cine_ref_index";
+const char* const video_file = "video_file";
 /// Input parameter
-const char* const cine_start_index = "cine_start_index";
+const char* const video_ref_index = "video_ref_index";
 /// Input parameter
-const char* const cine_preview_index = "cine_preview_index";
+const char* const video_start_index = "video_start_index";
 /// Input parameter
-const char* const cine_end_index = "cine_end_index";
+const char* const video_preview_index = "video_preview_index";
 /// Input parameter
-const char* const cine_skip_index = "cine_skip_index";
+const char* const video_end_index = "video_end_index";
+/// Input parameter
+const char* const video_skip_index = "video_skip_index";
+/// Input parameter
+const char* const stereo_cine_file = "stereo_cine_file"; // legacy option
+/// Input parameter
+const char* const cine_file = "cine_file"; // legacy option
+/// Input parameter
+const char* const cine_ref_index = "cine_ref_index"; // legacy option
+/// Input parameter
+const char* const cine_start_index = "cine_start_index"; // legacy option
+/// Input parameter
+const char* const cine_preview_index = "cine_preview_index"; // legacy option
+/// Input parameter
+const char* const cine_end_index = "cine_end_index";  // legacy option
+/// Input parameter
+const char* const cine_skip_index = "cine_skip_index"; // legacy option
 /// Input parameter (multiple deformed images not allowed)
 const char* const deformed_images = "deformed_images";
 // For image sequences

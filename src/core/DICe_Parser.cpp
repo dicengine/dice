@@ -269,9 +269,9 @@ Teuchos::RCP<Teuchos::ParameterList> parse_command_line(int argc,
       required_param_missing = true;
     }
   }
-  if(!inputParams->isParameter(DICe::reference_image_index)&&!inputParams->isParameter(DICe::reference_image)&&!inputParams->isParameter(DICe::cine_file)&&!inputParams->isParameter(DICe::netcdf_file)){
+  if(!inputParams->isParameter(DICe::reference_image_index)&&!inputParams->isParameter(DICe::reference_image)&&!inputParams->isParameter(DICe::cine_file)&&!inputParams->isParameter(DICe::video_file)&&!inputParams->isParameter(DICe::netcdf_file)){
     std::cout << "Error: Either the parameter " << DICe:: reference_image_index << " or " <<
-        DICe::reference_image << " or " << DICe::cine_file << " or " << DICe::netcdf_file << " needs to be specified in " << input_file << std::endl;
+        DICe::reference_image << " or " << DICe::cine_file << " or " << DICe::video_file << " or " << DICe::netcdf_file << " needs to be specified in " << input_file << std::endl;
     required_param_missing = true;
   }
   // specifying a simple two image correlation
@@ -478,8 +478,12 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       "Error, cannot specify stereo_right_suffix and reference_image");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::cine_file),std::runtime_error,
       "Error, cannot specify cine_file and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::video_file),std::runtime_error,
+      "Error, cannot specify video_file and reference_image");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::netcdf_file),std::runtime_error,
       "Error, cannot specify netcdf_file and reference_image");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_video_file),std::runtime_error,
+      "Error, cannot specify stereo_video_file and reference_image");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_cine_file),std::runtime_error,
       "Error, cannot specify stereo_cine_file and reference_image");
 
@@ -525,125 +529,137 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
     }
     num_frames = image_files.size()-1; // the first is the ref image
   }
-  else if(params->isParameter(DICe::cine_file)){
+  else if(params->isParameter(DICe::cine_file)||params->isParameter(DICe::video_file)){
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::video_file)&&params->isParameter(DICe::cine_file),std::runtime_error,
+      "Error, cannot specify cine_file and video_file together");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
-      "Error, cannot specify reference_image and cine_file");
+      "Error, cannot specify reference_image and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::deformed_images),std::runtime_error,
-      "Error, cannot specify deformed_images and cine_file");
+      "Error, cannot specify deformed_images and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_reference_image),std::runtime_error,
-      "Error, cannot specify stereo_reference_image and cine_file");
+      "Error, cannot specify stereo_reference_image and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_deformed_images),std::runtime_error,
-      "Error, cannot specify stereo_deformed_images and cine_file");
+      "Error, cannot specify stereo_deformed_images and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image_index),std::runtime_error,
-      "Error, cannot specify reference_image_index and cine_file");
+      "Error, cannot specify reference_image_index and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::end_image_index),std::runtime_error,
-      "Error, cannot specify end_image_index and cine_file");
+      "Error, cannot specify end_image_index and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::start_image_index),std::runtime_error,
-      "Error, cannot specify start_image_index and cine_file");
+      "Error, cannot specify start_image_index and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_prefix),std::runtime_error,
-      "Error, cannot specify image_file_prefix and cine_file");
+      "Error, cannot specify image_file_prefix and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::image_file_extension),std::runtime_error,
-      "Error, cannot specify image_file_prefix and cine_file");
+      "Error, cannot specify image_file_prefix and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::num_file_suffix_digits),std::runtime_error,
-      "Error, cannot specify image_file_prefix and cine_file");
+      "Error, cannot specify image_file_prefix and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_left_suffix),std::runtime_error,
-      "Error, cannot specify stereo_left_suffix and cine_file");
+      "Error, cannot specify stereo_left_suffix and cine_file or video_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::stereo_right_suffix),std::runtime_error,
-      "Error, cannot specify stereo_right_suffix and cine_file");
-
-//    image_files.push_back(DICe::cine_file);
-//    image_files.push_back(DICe::cine_file);
-//    if(params->isParameter(DICe::stereo_cine_file)){
-//      stereo_image_files.push_back(DICe::cine_file);
-//      stereo_image_files.push_back(DICe::cine_file);
-//    }
-    std::stringstream cine_name;
-    std::string cine_file_name = params->get<std::string>(DICe::cine_file);
-    cine_name << params->get<std::string>(DICe::image_folder) << cine_file_name;
+      "Error, cannot specify stereo_right_suffix and cine_file or video_file");
+    std::stringstream video_name;
+    std::string video_file_name;
+    bool legacy_input = true;
+    if(params->isParameter(DICe::cine_file))
+      video_file_name = params->get<std::string>(DICe::cine_file);
+    if(params->isParameter(DICe::video_file)){
+      video_file_name = params->get<std::string>(DICe::video_file);
+      legacy_input = false;
+    }
+    video_name << params->get<std::string>(DICe::image_folder) << video_file_name;
     Teuchos::RCP<std::ostream> bhs = Teuchos::rcp(new Teuchos::oblackholestream); // outputs nothing
+
     // read the image data for a frame
-    const int_t num_images = DICe::utils::cine_file_frame_count(cine_name.str());
-    const int_t first_frame_index = DICe::utils::cine_file_first_frame_id(cine_name.str());
-    //TEUCHOS_TEST_FOR_EXCEPTION(!input_params->isParameter(DICe::cine_ref_index),std::runtime_error,
-    //  "Error, the reference index for the cine file has not been specified");
-    const int_t cine_ref_index = params->get<int_t>(DICe::cine_ref_index,first_frame_index);
-    const int_t cine_start_index = params->get<int_t>(DICe::cine_start_index,first_frame_index);
-    const int_t cine_end_index = params->get<int_t>(DICe::cine_end_index,first_frame_index + num_images -1);
-    frame_skip = params->get<int_t>(DICe::cine_skip_index,1);
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index > cine_end_index,std::invalid_argument,"Error, the cine start index is > the cine end index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_start_index < first_frame_index,std::invalid_argument,"Error, the cine start index is < the first frame index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index > cine_end_index,std::invalid_argument,"Error, the cine ref index is > the cine end index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_ref_index < first_frame_index,std::invalid_argument,"Error, the cine ref index is < the first frame index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_start_index,std::invalid_argument,"Error, the cine end index is < the cine start index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index < cine_ref_index,std::invalid_argument,"Error, the cine end index is < the ref index");
-    TEUCHOS_TEST_FOR_EXCEPTION(cine_end_index >= first_frame_index + num_images,std::invalid_argument,"Error, the cine end index is >= first frame index + num_frames");
+    const int_t num_images = DICe::utils::video_file_frame_count(video_name.str());
+    const int_t first_frame_index = DICe::utils::video_file_first_frame_id(video_name.str());
+
+    int_t video_ref_index = 0;
+    int_t video_start_index = 0;
+    int_t video_end_index = 0;
+    if(legacy_input){
+      video_ref_index = params->get<int_t>(DICe::cine_ref_index,first_frame_index);
+      video_start_index = params->get<int_t>(DICe::cine_start_index,first_frame_index);
+      video_end_index = params->get<int_t>(DICe::cine_end_index,first_frame_index + num_images -1);
+      frame_skip = params->get<int_t>(DICe::cine_skip_index,1);
+    }else{
+      video_ref_index = params->get<int_t>(DICe::video_ref_index,first_frame_index);
+      video_start_index = params->get<int_t>(DICe::video_start_index,first_frame_index);
+      video_end_index = params->get<int_t>(DICe::video_end_index,first_frame_index + num_images -1);
+      frame_skip = params->get<int_t>(DICe::video_skip_index,1);
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(video_start_index > video_end_index,std::invalid_argument,"Error, the video start index is > the video end index");
+    TEUCHOS_TEST_FOR_EXCEPTION(video_start_index < first_frame_index,std::invalid_argument,"Error, the video start index is < the first frame index");
+    TEUCHOS_TEST_FOR_EXCEPTION(video_ref_index > video_end_index,std::invalid_argument,"Error, the video ref index is > the video end index");
+    TEUCHOS_TEST_FOR_EXCEPTION(video_ref_index < first_frame_index,std::invalid_argument,"Error, the video ref index is < the first frame index");
+    TEUCHOS_TEST_FOR_EXCEPTION(video_end_index < video_start_index,std::invalid_argument,"Error, the video end index is < the video start index");
+    TEUCHOS_TEST_FOR_EXCEPTION(video_end_index < video_ref_index,std::invalid_argument,"Error, the video end index is < the ref index");
+    TEUCHOS_TEST_FOR_EXCEPTION(video_end_index >= first_frame_index + num_images,std::invalid_argument,"Error, the video end index is >= first frame index + num_frames");
     // check if the reference frame should be averaged:
     int_t num_avg_frames = -1;
     if(params->isParameter(DICe::time_average_cine_ref_frame))
       num_avg_frames = params->get<int_t>(DICe::time_average_cine_ref_frame,1);
-    // strip the .cine part from the end of the cine file:
-    std::string trimmed_cine_name = cine_name.str();
-    const std::string ext(".cine");
-	std::string lower_case_trimmed_cine_ext(trimmed_cine_name.substr(trimmed_cine_name.size() - ext.size()));
-	to_lower(lower_case_trimmed_cine_ext);
-    if(trimmed_cine_name.size() > ext.size() && lower_case_trimmed_cine_ext == ".cine")
-    {
-       trimmed_cine_name = trimmed_cine_name.substr(0, trimmed_cine_name.size() - ext.size());
-    }
-	else
-	{
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid cine file: " << cine_file_name); 
-    }
-    std::stringstream ref_cine_ss;
-    ref_cine_ss << trimmed_cine_name << "_";
+    if(params->isParameter(DICe::time_average_video_ref_frame))
+      num_avg_frames = params->get<int_t>(DICe::time_average_video_ref_frame,1);
+    // strip the extension part from the end of the video file:
+    std::string trimmed_video_name = video_name.str();
+    const std::string ext = trimmed_video_name.substr(trimmed_video_name.find_last_of("."));
+    std::string lower_case_trimmed_ext(trimmed_video_name.substr(trimmed_video_name.size() - ext.size()));
+    to_lower(lower_case_trimmed_ext);
+    if(lower_case_trimmed_ext != ".cine" && legacy_input)
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid cine file: " << video_file_name);
+    if(trimmed_video_name.size() > ext.size())
+      trimmed_video_name = trimmed_video_name.substr(0, trimmed_video_name.size() - ext.size());
+    std::stringstream ref_video_ss;
+    ref_video_ss << trimmed_video_name << "_";
     if(num_avg_frames>0)
-      ref_cine_ss << "avg" << cine_ref_index << "to" << cine_ref_index + num_avg_frames;
+      ref_video_ss << "avg" << video_ref_index << "to" << video_ref_index + num_avg_frames;
     else
-      ref_cine_ss << cine_ref_index;
+      ref_video_ss << video_ref_index;
 
-    ref_cine_ss << ".cine";
-    frame_id_start = cine_start_index;
-    num_frames = std::floor((cine_end_index-cine_start_index)/frame_skip) + 1;
+    ref_video_ss << ext;
+    frame_id_start = video_start_index;
+    num_frames = std::floor((video_end_index-video_start_index)/frame_skip) + 1;
     image_files.resize(num_frames+1); // the additional one is the reference image
-    image_files[0] = ref_cine_ss.str();
+    image_files[0] = ref_video_ss.str();
     int_t current_index = 1;
 
-    for(int_t i=cine_start_index;i<=cine_end_index;i+=frame_skip){
-      std::stringstream def_cine_ss;
-      def_cine_ss << trimmed_cine_name << "_" << i << ".cine";
-      image_files[current_index++] = def_cine_ss.str();
+    for(int_t i=video_start_index;i<=video_end_index;i+=frame_skip){
+      std::stringstream def_video_ss;
+      def_video_ss << trimmed_video_name << "_" << i << ext;
+      image_files[current_index++] = def_video_ss.str();
     }
-    if(params->isParameter(DICe::stereo_cine_file)){
-      std::stringstream stereo_cine_name;
-      std::string stereo_cine_file_name = params->get<std::string>(DICe::stereo_cine_file);
-      stereo_cine_name << params->get<std::string>(DICe::image_folder) << stereo_cine_file_name;
-      // strip the .cine part from the end of the cine file:
-      std::string stereo_trimmed_cine_name = stereo_cine_name.str();
-	  std::string lower_case_trimmed_cine_ext(stereo_trimmed_cine_name.substr(stereo_trimmed_cine_name.size() - ext.size()));
-	  to_lower(lower_case_trimmed_cine_ext);
-      if(stereo_trimmed_cine_name.size() > ext.size() && lower_case_trimmed_cine_ext == ".cine" )
-      {
-         stereo_trimmed_cine_name = stereo_trimmed_cine_name.substr(0, stereo_trimmed_cine_name.size() - ext.size());
-      }else{
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid stereo cine file: " << stereo_cine_file_name);
-      }
-      std::stringstream stereo_ref_cine_ss;
-      stereo_ref_cine_ss << stereo_trimmed_cine_name << "_";
-      if(num_avg_frames>0)
-        stereo_ref_cine_ss << "avg" << cine_ref_index << "to" << cine_ref_index + num_avg_frames;
+    if(params->isParameter(DICe::stereo_cine_file)||params->isParameter(DICe::stereo_video_file)){
+      std::stringstream stereo_video_name;
+      std::string stereo_video_file_name;
+      if(legacy_input)
+        stereo_video_file_name = params->get<std::string>(DICe::stereo_cine_file);
       else
-        stereo_ref_cine_ss << cine_ref_index;
-      stereo_ref_cine_ss << ".cine";
+        stereo_video_file_name = params->get<std::string>(DICe::stereo_video_file);
+      stereo_video_name << params->get<std::string>(DICe::image_folder) << stereo_video_file_name;
+      // strip the .cine part from the end of the cine file:
+      std::string stereo_trimmed_video_name = stereo_video_name.str();
+      std::string lower_case_trimmed_ext(stereo_trimmed_video_name.substr(stereo_trimmed_video_name.size() - ext.size()));
+      to_lower(lower_case_trimmed_ext);
+      if(lower_case_trimmed_ext != ".cine" && legacy_input)
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, invalid cine file: " << stereo_video_file_name);
+      if(stereo_trimmed_video_name.size() > ext.size())
+        stereo_trimmed_video_name = stereo_trimmed_video_name.substr(0,stereo_trimmed_video_name.size() - ext.size());
+      std::stringstream stereo_ref_video_ss;
+      stereo_ref_video_ss << stereo_trimmed_video_name << "_";
+      if(num_avg_frames>0)
+        stereo_ref_video_ss << "avg" << video_ref_index << "to" << video_ref_index + num_avg_frames;
+      else
+        stereo_ref_video_ss << video_ref_index;
+      stereo_ref_video_ss << ext;
       stereo_image_files.resize(num_frames+1); // additional one is for the ref image
-      stereo_image_files[0] = stereo_ref_cine_ss.str();
+      stereo_image_files[0] = stereo_ref_video_ss.str();
       int_t current_stereo_index = 1;
-      for(int_t i=cine_start_index;i<=cine_end_index;i+=frame_skip){
-        std::stringstream stereo_def_cine_ss;
-        stereo_def_cine_ss << stereo_trimmed_cine_name << "_" << i << ".cine";
-        stereo_image_files[current_stereo_index++] = stereo_def_cine_ss.str();
+      for(int_t i=video_start_index;i<=video_end_index;i+=frame_skip){
+        std::stringstream stereo_def_video_ss;
+        stereo_def_video_ss << stereo_trimmed_video_name << "_" << i << ext;
+        stereo_image_files[current_stereo_index++] = stereo_def_video_ss.str();
       }
     }
-  } // end cine file
+  } // end video file
 #if DICE_ENABLE_NETCDF
   else if(params->isParameter(DICe::netcdf_file)){
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::reference_image),std::runtime_error,
@@ -672,6 +688,8 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       "Error, cannot specify stereo_right_suffix and netcdf_file");
     TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::cine_file),std::runtime_error,
       "Error, cannot specify cine_file and netcdf_file");
+    TEUCHOS_TEST_FOR_EXCEPTION(params->isParameter(DICe::video_file),std::runtime_error,
+      "Error, cannot specify video_file and netcdf_file");
 
     std::stringstream netcdf_name;
     std::string netcdf_file_name = params->get<std::string>(DICe::netcdf_file);
@@ -920,14 +938,14 @@ void generate_template_input_files(const std::string & file_prefix){
   write_xml_string_param(inputFile,DICe::image_file_prefix);
   write_xml_comment(inputFile,"The tag at the front of the file names. For the example above this would be \"Image_\"");
   write_xml_comment(inputFile,"");
-  write_xml_comment(inputFile,"Another option is to read frames from a cine file. In that case, the following parameters are used");
-  write_xml_comment(inputFile,"Note that all of the values for indexing are in terms of the cine file's first frame number (which may be negative due to trigger)");
+  write_xml_comment(inputFile,"Another option is to read frames from a video file. In that case, the following parameters are used");
+  write_xml_comment(inputFile,"Note that all of the values for indexing are in terms of the video file's first frame number (which may be negative due to trigger)");
   write_xml_comment(inputFile,"For example, if the trigger image number is -100, the ref_index would be -100 as well as the start index");
   write_xml_comment(inputFile,"The end index would be the trigger index + the number of frames to analyze, the default is the entire video.");
-  write_xml_string_param(inputFile,DICe::cine_file);
-  write_xml_size_param(inputFile,DICe::cine_ref_index);
-  write_xml_size_param(inputFile,DICe::cine_start_index);
-  write_xml_size_param(inputFile,DICe::cine_end_index);
+  write_xml_string_param(inputFile,DICe::video_file);
+  write_xml_size_param(inputFile,DICe::video_ref_index);
+  write_xml_size_param(inputFile,DICe::video_start_index);
+  write_xml_size_param(inputFile,DICe::video_end_index);
 
   // write the correlation parameters
 

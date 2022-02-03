@@ -1244,7 +1244,7 @@ template <typename S>
 bool
 Image_<S>::is_video_frame()const{
   Image_File_Type type = utils::image_file_type(file_name_.c_str());
-  if(type==CINE||type==NETCDF)
+  if(type==CINE||type==NETCDF||type==VIDEO)
     return true;
   else
     return false;

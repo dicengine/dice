@@ -56,11 +56,6 @@
 #endif
 
 namespace DICe {
-/*!
- *  \namespace DICe::cine
- *  @{
- */
-/// cine file format utilities
 namespace netcdf{
 
 /// \class DICe::netcdf::NetCDF

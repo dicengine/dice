@@ -77,13 +77,13 @@ std::string netcdf_file_name(const char * decorated_netcdf_file);
 DICE_LIB_DLL_EXPORT
 int_t netcdf_index(const char * decorated_netcdf_file);
 
-/// returns the name of a file given a decorated file name string
-/// \param decorated_cine_file the decorated string that contains the name
+/// returns the name of a file given a decorated video file name string
+/// \param decorated_video_file the decorated string that contains the name
 DICE_LIB_DLL_EXPORT
-std::string cine_file_name(const char * decorated_cine_file);
+std::string video_file_name(const char * decorated_video_file);
 
-/// returns the start index decyphered from the cine file descriptor passed in
-/// \param decorated_cine_file the descriptor that has the cine name and index concatendated
+/// returns the start index decyphered from the video file descriptor passed in
+/// \param decorated_video_file the descriptor that has the video name and index concatendated
 /// \param start_index [out] the start index requested
 /// \param end_index [out] returned as -1 unless the descriptor has an "avg" tag appended
 /// \param is_avg true if more than one frame gets averaged together
@@ -92,7 +92,7 @@ std::string cine_file_name(const char * decorated_cine_file);
 /// averaging of frames 45 through 51 inclusive.
 /// negative numbers are okay e.g. cine_file_avg-12to-10.cine or cine_file_-500.cine
 DICE_LIB_DLL_EXPORT
-void cine_index(const char * decorated_cine_file,
+void video_index(const char * decorated_video_file,
   int_t & start_index,
   int_t & end_index,
   bool & is_avg);
@@ -213,17 +213,18 @@ void write_color_overlap_image(const char * file_name,
 DICE_LIB_DLL_EXPORT
 cv::Mat read_image(const char * file_name);
 
-// singleton class to keep track of image readers from cine files:
-/// \class HyperCine_Singleton
+
+// singleton class to keep track of image readers from video files:
+/// \class Video_Singleton
 /// NOTE: this singleton shouldn't be accessed directly from libraries external to diceioutils,
 /// This is because on Windows, singletons are local to the .dll and calls to the singleton
 /// from another .dll will create another instance of the singleton.
 class DICE_LIB_DLL_EXPORT
-HyperCine_Singleton{
+Video_Singleton{
 public:
   /// return an instance of the singleton
-  static HyperCine_Singleton &instance(){
-    static HyperCine_Singleton instance_;
+  static Video_Singleton &instance(){
+    static Video_Singleton instance_;
     return instance_;
   }
 
@@ -232,8 +233,12 @@ public:
   Teuchos::RCP<hypercine::HyperCine> hypercine(const std::string & id,
     hypercine::HyperCine::Bit_Depth_Conversion_Type conversion_type=hypercine::HyperCine::QUAD_10_TO_12);
 
-  /// utility to get the image dimensions from a hypercine object if one exists with the same file name
-  /// if no hypercine objects exist, the utility reads the dimensions without creating a new one
+  /// \param id the string name of the reader in case multiple headers are loaded (for example in stereo)
+  /// if the reader doesn't exist, it gets created
+  Teuchos::RCP<cv::VideoCapture> video_capture(const std::string & id);
+
+  /// utility to get the image dimensions from a hypercine or video capture object if one exists with the same file name
+  /// if no hypercine or video capture objects exist, the utility reads the dimensions without creating a new one
   /// \param id file name
   /// \param width the width of the full frame image
   /// \param heigh the height of the full frame image
@@ -241,22 +246,27 @@ public:
 
 private:
   /// constructor
-  HyperCine_Singleton(){};
+  Video_Singleton(){};
   /// copy constructor
-  HyperCine_Singleton(HyperCine_Singleton const&);
+  Video_Singleton(Video_Singleton const&);
   /// asignment operator
-  void operator=(HyperCine_Singleton const &);
+  void operator=(Video_Singleton const &);
   /// map of cine readers
   std::map<std::pair<std::string,hypercine::HyperCine::Bit_Depth_Conversion_Type>,Teuchos::RCP<hypercine::HyperCine> > hypercine_map_;
+  /// map of video capture readers
+  std::map<std::string,Teuchos::RCP<cv::VideoCapture> > video_capture_map_;
 };
 
-/// helper functions for hypercine
 DICE_LIB_DLL_EXPORT
-int_t cine_file_frame_count(const std::string & cine_name);
+bool is_cine_file(const std::string & file_name);
 
 /// helper functions for hypercine
 DICE_LIB_DLL_EXPORT
-int_t cine_file_first_frame_id(const std::string & cine_name);
+int_t video_file_frame_count(const std::string & video_name);
+
+/// helper functions for hypercine
+DICE_LIB_DLL_EXPORT
+int_t video_file_first_frame_id(const std::string & video_name);
 
 /// helper functions for hypercine
 DICE_LIB_DLL_EXPORT
