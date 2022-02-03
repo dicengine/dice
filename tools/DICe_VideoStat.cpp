@@ -39,8 +39,8 @@
 // ************************************************************************
 // @HEADER
 
-/*! \file  DICe_CineToTiff.cpp
-    \brief Utility for exporting cine files to tiff files
+/*! \file  DICe_VideoStat.cpp
+    \brief Utility for exporting video files to tiff files
 */
 
 #include <DICe.h>
@@ -69,8 +69,8 @@ int main(int argc, char *argv[]) {
   if(argc>=2){
     std::string help = argv[1];
     if(help=="-h"||argc>2){
-      std::cout << " DICe_CineStat (writes a file with the cine index range) " << std::endl;
-      std::cout << " Syntax: DICe_CineStat <cine_file_name>" << std::endl;
+      std::cout << " DICe_VideoStat (writes a file with the valid video index range) " << std::endl;
+      std::cout << " Syntax: DICe_VideoStat <video_file_name>" << std::endl;
       exit(0);
     }
   }
@@ -81,14 +81,25 @@ int main(int argc, char *argv[]) {
     DEBUG_MSG(argv[i]);
   }
   std::string fileName = argv[1];
-  *outStream << "Cine file name: " << fileName << std::endl;
-  Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::Video_Singleton::instance().hypercine(fileName,hypercine::HyperCine::TO_8_BIT);
-  *outStream << "\nCine read successfully\n" << std::endl;
+  *outStream << "Video file name: " << fileName << std::endl;
 
-  const int_t num_images = hc->file_frame_count();
-  const int_t first_frame = hc->file_first_frame_id();
-  const int_t last_frame = first_frame + num_images - 1;
-  const int_t frame_rate = hc->frame_rate();
+  int_t num_images, first_frame, last_frame, frame_rate;
+
+  if(DICe::utils::is_cine_file(fileName)){
+    Teuchos::RCP<hypercine::HyperCine> hc = DICe::utils::Video_Singleton::instance().hypercine(fileName,hypercine::HyperCine::TO_8_BIT);
+    *outStream << "\nCine read successfully\n" << std::endl;
+    num_images = hc->file_frame_count();
+    first_frame = hc->file_first_frame_id();
+    last_frame = first_frame + num_images - 1;
+    frame_rate = hc->frame_rate();
+  }else{
+    Teuchos::RCP<cv::VideoCapture> vc = DICe::utils::Video_Singleton::instance().video_capture(fileName);
+    *outStream << "\nVideo read successfully\n" << std::endl;
+    num_images = vc->get(cv::CAP_PROP_FRAME_COUNT);
+    first_frame = 0;
+    last_frame = first_frame + num_images - 1;
+    frame_rate = vc->get(cv::CAP_PROP_FPS);
+  }
 
   *outStream << "Num frames:     " << num_images << std::endl;
   *outStream << "First frame:    " << first_frame << std::endl;
@@ -97,7 +108,7 @@ int main(int argc, char *argv[]) {
 
   // write stats to file
   create_directory(".dice");
-  std::FILE * filePtr = fopen(".dice/.cine_stats.dat","w");
+  std::FILE * filePtr = fopen(".dice/.video_stats.dat","w");
   fprintf(filePtr,"%i %i %i %i\n",num_images,first_frame,last_frame,frame_rate);
   fclose(filePtr);
 

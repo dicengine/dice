@@ -48,10 +48,10 @@ install(TARGETS DICe_CineToTiff
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
 )
 
-add_executable(DICe_CineStat           DICe_CineStat.cpp)
-target_link_libraries(DICe_CineStat    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
+add_executable(DICe_VideoStat           DICe_VideoStat.cpp)
+target_link_libraries(DICe_VideoStat    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
 
-install(TARGETS DICe_CineStat
+install(TARGETS DICe_VideoStat
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
 )
 
@@ -83,7 +83,7 @@ target_link_libraries(DICe_Cal    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
 add_executable(DICe_Epiline           DICe_Epiline.cpp)
 target_link_libraries(DICe_Epiline    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
 
-set_target_properties(DICe_CineToTiff DICe_CineStat DICe_Diff DICe_DiffAvg DICe_CrossInit DICe_Cal DICe_Epiline
+set_target_properties(DICe_CineToTiff DICe_VideoStat DICe_Diff DICe_DiffAvg DICe_CrossInit DICe_Cal DICe_Epiline
   PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
