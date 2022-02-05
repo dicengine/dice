@@ -244,8 +244,14 @@ void read_image(const char * file_name,
   int_t sub_h=0;
   int_t sub_offset_x=0;
   int_t sub_offset_y=0;
+  storage_t cuttoff = 0;
   bool layout_right=true;
   bool is_subimage=false;
+  bool filter_failed_pixels = true;
+  bool convert_to_8_bit = true;
+  bool reinit = false;
+  bool use_threshold = false;
+  bool buffer_persistence_guaranteed = false;
   if(params!=Teuchos::null){
     sub_w = params->isParameter(subimage_width) ? params->get<int_t>(subimage_width) : 0;
     sub_h = params->isParameter(subimage_height) ? params->get<int_t>(subimage_height) : 0;
@@ -256,10 +262,19 @@ void read_image(const char * file_name,
         params->isParameter(subimage_offset_x)||
         params->isParameter(subimage_offset_y);
     layout_right = params->get<bool>(is_layout_right,true);
+    reinit = params->get(reinitialize_cine_reader_threshold,reinit);
+    use_threshold = params->get(use_threshold_for_failed_cine_pixels,use_threshold);
+    filter_failed_pixels = params->get<bool>(filter_failed_cine_pixels,filter_failed_pixels);
+    convert_to_8_bit = params->get<bool>(convert_cine_to_8_bit,convert_to_8_bit);
+    buffer_persistence_guaranteed = params->get<bool>(DICe::buffer_persistence_guaranteed,buffer_persistence_guaranteed);
   }
   DEBUG_MSG("utils::read_image(): file name: " << file_name);
   DEBUG_MSG("utils::read_image(): sub_w: " << sub_w << " sub_h: " << sub_h << " offset_x: " << sub_offset_x << " offset_y: " << sub_offset_y);
   DEBUG_MSG("utils::read_image(): is_layout_right: " << layout_right);
+  DEBUG_MSG("utils::read_image(): filter_failed_pixels: " << filter_failed_pixels);
+  DEBUG_MSG("utils::read_image(): convert_to_8_bit: " << convert_to_8_bit);
+  DEBUG_MSG("utils::read_image(): reinit: " << reinit);
+
   int_t width = 0;
   int_t height = 0;
   // determine the file type based on the file_name
@@ -318,28 +333,25 @@ void read_image(const char * file_name,
         }
       }
     } // end avg loop
-    for(int_t y=0;y<height;++y){
-      for(int_t x=0;x<width;++x){
-        intensities[y*width + x] /= num_frames;
+    if(num_frames>1){
+      for(int_t y=0;y<height;++y){
+        for(int_t x=0;x<width;++x){
+          intensities[y*width + x] /= num_frames;
+        }
       }
+    }
+    static storage_t threshold = 255; // frames read from video files are always converted to 8 bit UC so max value is always 255
+    if(filter_failed_pixels){
+      if(threshold==255){
+        std::vector<storage_t> full_data(width*height,0.0);
+        for(int_t i=0;i<width*height;++i) full_data[i] = intensities[i];
+        std::sort(full_data.begin(),full_data.end());
+        threshold = 0.98*full_data[full_data.size()-1];
+      }
+      cuttoff = threshold;
     }
   } // end video frame
   else if(file_type==CINE){
-    bool filter_failed_pixels = true;
-    bool convert_to_8_bit = true;
-    bool reinit = false;
-    bool use_threshold = false;
-    bool buffer_persistence_guaranteed = false;
-    if(params!=Teuchos::null){
-      reinit = params->get(reinitialize_cine_reader_threshold,reinit);
-      use_threshold = params->get(use_threshold_for_failed_cine_pixels,use_threshold);
-      filter_failed_pixels = params->get<bool>(filter_failed_cine_pixels,filter_failed_pixels);
-      convert_to_8_bit = params->get<bool>(convert_cine_to_8_bit,convert_to_8_bit);
-      buffer_persistence_guaranteed = params->get<bool>(DICe::buffer_persistence_guaranteed,buffer_persistence_guaranteed);
-    }
-    DEBUG_MSG("utils::read_image(): filter_failed_pixels: " << filter_failed_pixels);
-    DEBUG_MSG("utils::read_image(): convert_to_8_bit: " << convert_to_8_bit);
-    DEBUG_MSG("utils::read_image(): reinit: " << reinit);
     const std::string cine_file = video_file_name(file_name);
     DEBUG_MSG("utils::read_image(): cine file name: " << cine_file);
     int_t end_index = -1;
@@ -381,7 +393,8 @@ void read_image(const char * file_name,
             }
           }
         }
-      }
+      } // end filter failed
+      cuttoff = threshold;
       if(buffer_persistence_guaranteed){
         DEBUG_MSG("utils::read_image(): intensity values obtained via pointer to hypercine memory buffer");
         TEUCHOS_TEST_FOR_EXCEPTION(!hc->buffer_has_frame_window(start_index,sub_offset_x,width,sub_offset_y,height),
@@ -401,30 +414,6 @@ void read_image(const char * file_name,
         // would replace the existing intensity values that this image points to
         for(int_t i=0;i<intensities.size();++i)
           intensities[i] = data[i];
-      }
-      if(filter_failed_pixels){
-        if(use_threshold){ // the old way of doing things was to simply replace the failed pixel with a threshold value
-          for(int_t i=0;i<intensities.size();++i)
-            intensities[i] = std::min(intensities[i],static_cast<S>(threshold));
-        }else{
-          // ensure not on the boundary and
-          // take an average of the surrounding pixels
-          int_t px = 0, py = 0;
-          for(int_t i=0;i<intensities.size();++i){
-            if(intensities[i]>threshold){
-              py = i/width;
-              px = i - py*width;
-              if(px>0&&px<width-1&&py>0&&py<height-1){
-                intensities[i] = 0.125*(intensities[i-1]+intensities[i+1]+
-                    intensities[i-width]+intensities[i-width+1]+intensities[i-width-1]+
-                    intensities[i+width]+intensities[i+width+1]+intensities[i+width+1]);
-              }else if(i>0){
-                intensities[i] = intensities[i-1];
-              }
-            }
-          }
-
-        }
       }
     } // end not is_avg
   }
@@ -497,6 +486,32 @@ void read_image(const char * file_name,
     }
   }
   // apply any post processing of the images as requested
+  if(file_type==CINE||file_type==VIDEO){
+    if(filter_failed_pixels){
+      if(use_threshold){ // the old way of doing things was to simply replace the failed pixel with a threshold value
+        for(int_t i=0;i<intensities.size();++i)
+          intensities[i] = std::min(intensities[i],static_cast<S>(cuttoff));
+      }else{
+        // ensure not on the boundary and
+        // take an average of the surrounding pixels
+        int_t px = 0, py = 0;
+        for(int_t i=0;i<intensities.size();++i){
+          if(intensities[i]>cuttoff){
+            py = i/width;
+            px = i - py*width;
+            if(px>0&&px<width-1&&py>0&&py<height-1){
+              intensities[i] = 0.125*(intensities[i-1]+intensities[i+1]+
+                  intensities[i-width]+intensities[i-width+1]+intensities[i-width-1]+
+                  intensities[i+width]+intensities[i+width+1]+intensities[i+width+1]);
+            }else if(i>0){
+              intensities[i] = intensities[i-1];
+            }
+          }
+        }
+      } // end not use_threshold
+    } // end filter_failed
+  } // end CINE or VIDEO
+
   if(params!=Teuchos::null){
     if(params->get<bool>(remove_outlier_pixels,false)){
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"depricated function");
@@ -703,12 +718,9 @@ void spread_histogram(const int_t,const int_t,scalar_t *);
 DICE_LIB_DLL_EXPORT
 cv::Mat read_image(const char * file_name){
   Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
-  if(image_file_type(file_name)==CINE){
-    //params->set(spread_intensity_histogram,true);
-    if(image_file_type(file_name)==CINE){
-      params->set(filter_failed_cine_pixels,true);
-      params->set(convert_cine_to_8_bit,true);
-    }
+  if(image_file_type(file_name)==CINE||image_file_type(file_name)==VIDEO){
+    params->set(filter_failed_cine_pixels,true);
+    params->set(convert_cine_to_8_bit,true);
     int_t width = 0;
     int_t height = 0;
     read_image_dimensions(file_name,width,height);
@@ -722,28 +734,7 @@ cv::Mat read_image(const char * file_name){
       }
     }
     return img;
-  }else if(image_file_type(file_name)==VIDEO){
-    const std::string video_file = video_file_name(file_name);
-    DEBUG_MSG("utils::read_image(): video file name: " << video_file);
-    int_t end_index = -1;
-    int_t start_index =-1;
-    bool is_avg = false;
-    video_index(file_name,start_index,end_index,is_avg);
-    if(is_avg){
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"avg frame not implemented for video files");
-    }
-    Teuchos::RCP<cv::VideoCapture> vc = DICe::utils::Video_Singleton::instance().video_capture(video_file);
-    vc->set(cv::CAP_PROP_POS_FRAMES,start_index);
-    cv::Mat frame;
-    if(!vc->read(frame)||frame.empty()){
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"read image from video capture failed, frame " << start_index);
-    }
-    if(frame.channels()!=1)
-      cv::cvtColor(frame,frame,cv::COLOR_BGR2GRAY);
-    frame.convertTo(frame, CV_8UC1);
-    return frame;
-  }
-  else{
+  }else{
     cv::Mat image = cv::imread(file_name,cv::IMREAD_GRAYSCALE);
     if (image.empty()) {
       DEBUG_MSG("utils::read_image(): image is empty, it could have unicode characters in the name so trying to read with a buffer instead");
@@ -882,6 +873,7 @@ Video_Singleton::video_capture(const std::string & id){
   if(video_capture_map_.find(id)==video_capture_map_.end()){
     DEBUG_MSG("Video_Singleton::video_capture(): insering a new VideoCapture for file " << id );
     Teuchos::RCP<cv::VideoCapture> vc = Teuchos::rcp(new cv::VideoCapture(id));
+    TEUCHOS_TEST_FOR_EXCEPTION(!vc->isOpened(),std::runtime_error,"video capture load failed for " << id);
     video_capture_map_.insert(std::pair<std::string,Teuchos::RCP<cv::VideoCapture> >(id,vc));
     return vc;
   }else{

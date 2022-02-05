@@ -586,6 +586,7 @@ void decipher_image_file_names(Teuchos::RCP<Teuchos::ParameterList> params,
       video_end_index = params->get<int_t>(DICe::video_end_index,first_frame_index + num_images -1);
       frame_skip = params->get<int_t>(DICe::video_skip_index,1);
     }
+    TEUCHOS_TEST_FOR_EXCEPTION(frame_skip<=0,std::invalid_argument,"Error, frame skip index must be > 0");
     TEUCHOS_TEST_FOR_EXCEPTION(video_start_index > video_end_index,std::invalid_argument,"Error, the video start index is > the video end index");
     TEUCHOS_TEST_FOR_EXCEPTION(video_start_index < first_frame_index,std::invalid_argument,"Error, the video start index is < the first frame index");
     TEUCHOS_TEST_FOR_EXCEPTION(video_ref_index > video_end_index,std::invalid_argument,"Error, the video ref index is > the video end index");
