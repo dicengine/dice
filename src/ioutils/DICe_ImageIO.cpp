@@ -195,8 +195,8 @@ void read_image_dimensions(const char * file_name,
     const std::string video_file = video_file_name(file_name);
     DEBUG_MSG("read_image_dimensions(): video file name: " << video_file);
     DICe::utils::Video_Singleton::instance().image_dimensions(video_file,width,height);
-    assert(width>0);
-    assert(height>0);
+    TEUCHOS_TEST_FOR_EXCEPTION(width<=0,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(height<=0,std::runtime_error,"");
   }
 #if DICE_ENABLE_NETCDF
   else if(file_type==NETCDF){
@@ -913,7 +913,7 @@ Video_Singleton::image_dimensions(const std::string & id, int_t & width, int_t &
     for(;it!=video_capture_map_.end();++it){
       if(it->first==id){
         DEBUG_MSG("Video_Singleton::image_dimensions(): using dims from existing VideoCapture " << id);
-        TEUCHOS_TEST_FOR_EXCEPTION(!it->second->isOpened(),std::runtime_error,"video file is not open, but should be");
+        TEUCHOS_TEST_FOR_EXCEPTION(!it->second->isOpened(),std::runtime_error,"Error: Video open failed " << id);
         width = (int_t)it->second->get(cv::CAP_PROP_FRAME_WIDTH);
         height = (int_t)it->second->get(cv::CAP_PROP_FRAME_HEIGHT);
         return;
@@ -921,6 +921,7 @@ Video_Singleton::image_dimensions(const std::string & id, int_t & width, int_t &
     }
     // no matching (by name) video objects found
     cv::VideoCapture cap(id);
+    TEUCHOS_TEST_FOR_EXCEPTION(!cap.isOpened(),std::runtime_error,"Error: Video open failed: " << id);
     width = (int_t)cap.get(cv::CAP_PROP_FRAME_WIDTH);
     height = (int_t)cap.get(cv::CAP_PROP_FRAME_HEIGHT);
   }
