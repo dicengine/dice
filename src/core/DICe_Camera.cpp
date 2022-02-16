@@ -693,7 +693,7 @@ Camera::sensor_to_image(
 
     case NO_LENS_DISTORTION:
       for (size_t i = 0; i < vec_size; i++) {
-        image_x[i] = sen_x[i] * fx + cx;
+        image_x[i] = sen_x[i] * fx +sen_y[i] * fs + cx;
         image_y[i] = sen_y[i] * fy + cy;
       }
       break;
@@ -707,7 +707,7 @@ Camera::sensor_to_image(
         dis_coef = k1 * rad + k2 * pow(rad, 2) + k3 * pow(rad, 3);
         x_sen = (rad + dis_coef)*x_sen / rad;
         y_sen = (rad + dis_coef)*y_sen / rad;
-        image_x[i] = x_sen * fx + cx;
+        image_x[i] = x_sen * fx + y_sen * fs + cx;
         image_y[i] = y_sen * fy + cy;
       }
       break;
@@ -721,7 +721,7 @@ Camera::sensor_to_image(
         dis_coef = k1 * pow(rad, 2) + k2 * pow(rad, 4) + k3 * pow(rad, 6);
         x_sen = (rad + dis_coef)*x_sen / rad;
         y_sen = (rad + dis_coef)*y_sen / rad;
-        image_x[i] = x_sen * fx + cx;
+        image_x[i] = x_sen * fx + y_sen * fs + cx;
         image_y[i] = y_sen * fy + cy;
       }
       break;
@@ -735,7 +735,7 @@ Camera::sensor_to_image(
         dis_coef = k1 * pow(rad, 3) + k2 * pow(rad, 5) + k3 * pow(rad, 7);
         x_sen = (rad + dis_coef)*x_sen / rad;
         y_sen = (rad + dis_coef)*y_sen / rad;
-        image_x[i] = x_sen * fx + cx;
+        image_x[i] = x_sen * fx + y_sen * fs + cx;
         image_y[i] = y_sen * fy + cy;
       }
       break;
@@ -844,7 +844,7 @@ Camera::sensor_to_image(
         }
       }
       for (size_t i = 0; i < vec_size; i++) {
-        image_x[i] = image_x[i] * fx + cx;
+        image_x[i] = image_x[i] * fx + image_y[i] * fs + cx;
         image_y[i] = image_y[i] * fy + cy;
       }
     }
@@ -852,7 +852,7 @@ Camera::sensor_to_image(
     default:
       //raise exception if it gets here?
       for (size_t i = 0; i < vec_size; i++) {
-        image_x[i] = sen_x[i] * fx + cx;
+        image_x[i] = sen_x[i] * fx + sen_y[i] * fs + cx;
         image_y[i] = sen_y[i] * fy + cy;
       }
       break;
