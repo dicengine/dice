@@ -116,6 +116,11 @@ public:
     return & cal_intrinsics_;
   }
 
+  /// returns a pointer to the camera_system
+  Teuchos::RCP<Camera_System> camera_system(){
+    return camera_system_;
+  }
+
   /// provides access to image width from a triangulation
   const int_t image_width()const{
     if(camera_system_==Teuchos::null) return -1;
