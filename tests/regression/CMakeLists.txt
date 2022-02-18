@@ -14,6 +14,7 @@ SET(REGRESSION_TESTS
   dic_challenge_12_sorted
   simple_tracking
   reset_lost_subsets
+  epipolar_distortion
 )
 IF(NOT UNIX)
   SET(REGRESSION_TESTS

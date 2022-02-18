@@ -1,0 +1,12 @@
+begin region_of_interest
+  begin boundary
+    begin polygon
+      begin vertices
+        544 128
+        1363 128
+        1363 949
+        544 949
+      end vertices
+    end polygon
+  end boundary
+end region_of_interest

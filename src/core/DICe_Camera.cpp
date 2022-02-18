@@ -657,7 +657,8 @@ Camera::sensor_to_image(
   const std::vector<S> & sen_x,
   const std::vector<S> & sen_y,
   std::vector<S> & image_x,
-  std::vector<S> & image_y) {
+  std::vector<S> & image_y,
+  const Lens_Distortion_Model dist_model_override) {
   camera_info_.check_valid();
   //converts sensor locations to image locations by applying lens distortions
   const size_t vec_size = image_x.size();
@@ -688,8 +689,11 @@ Camera::sensor_to_image(
   S x_sen, y_sen, rad, dis_coef, rad_sqr;
   S x_temp, y_temp;
 
+  // enable the caller to do things like use no distortions in the sensor to image mapping through an override
+  Lens_Distortion_Model dist_model = dist_model_override==NO_SUCH_LENS_DISTORTION_MODEL? lens_distortion_model() : dist_model_override;
+
   //use the appropriate lens distortion model (only 8 parameter openCV has been tested)
-  switch (lens_distortion_model()) {
+  switch (dist_model) {
 
     case NO_LENS_DISTORTION:
       for (size_t i = 0; i < vec_size; i++) {
@@ -860,9 +864,9 @@ Camera::sensor_to_image(
 }
 
 #ifndef PRECISION_SCALAR_SAME_TYPE
-template DICE_LIB_DLL_EXPORT void Camera::sensor_to_image(const std::vector<precision_t> &,const std::vector<precision_t> &,std::vector<precision_t> &,std::vector<precision_t> &);
+template DICE_LIB_DLL_EXPORT void Camera::sensor_to_image(const std::vector<precision_t> &,const std::vector<precision_t> &,std::vector<precision_t> &,std::vector<precision_t> &,const Lens_Distortion_Model);
 #endif
-template DICE_LIB_DLL_EXPORT void Camera::sensor_to_image(const std::vector<scalar_t> &,const std::vector<scalar_t> &,std::vector<scalar_t> &,std::vector<scalar_t> &);
+template DICE_LIB_DLL_EXPORT void Camera::sensor_to_image(const std::vector<scalar_t> &,const std::vector<scalar_t> &,std::vector<scalar_t> &,std::vector<scalar_t> &,const Lens_Distortion_Model);
 
 void
 Camera::sensor_to_image(

@@ -369,7 +369,8 @@ public:
     std::vector<int_t> & out_gids,
     const int_t num_neigh,
     Teuchos::RCP<kd_tree_2d_t> kd_tree,
-    const scalar_t & epi_error_tol);
+    const scalar_t & epi_error_tol,
+    Teuchos::RCP<Triangulation> tri);
 
   /// Save off the q and r fields once the mapping from left to right image is known
   void save_cross_correlation_fields();

@@ -135,6 +135,11 @@ public:
     return camera_system_->camera(0)->image_height();
   }
 
+  /// utility function to undistort point locations
+  void undistort_points(std::vector<scalar_t> & points_x,
+    std::vector<scalar_t> & points_y,
+    const int_t camera_id) const;
+
   /// provide access to epipolar error in camera calibration
   const scalar_t avg_epipolar_error()const{return camera_system_->avg_epipolar_error();}
 

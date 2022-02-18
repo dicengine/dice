@@ -1,0 +1,21 @@
+<ParameterList>
+<Parameter name="output_folder" type="string" value="./results/" /> 
+<Parameter name="correlation_parameters_file" type="string" value="params.xml" />
+<Parameter name="subset_size" type="int" value="31" />
+<Parameter name="step_size" type="int" value="25" />
+<Parameter name="subset_file" type="string" value="roi.txt" />
+<Parameter name="separate_output_file_for_each_subset" type="bool" value="false" />
+<Parameter name="create_separate_run_info_file" type="bool" value="true" />
+<Parameter name="camera_system_file" type="string" value="cal.xml" />
+<Parameter name="image_folder" type="string" value="./images/" />
+<Parameter name="reference_image" type="string" value="left_dist.png" />
+<ParameterList name="deformed_images">
+<Parameter name="left_dist.png" type="bool" value="true" />
+<Parameter name="left_undist.png" type="bool" value="true" />
+</ParameterList>
+<Parameter name="stereo_reference_image" type="string" value="right_dist.png" />
+<ParameterList name="stereo_deformed_images">
+<Parameter name="right_dist.png" type="bool" value="true" />
+<Parameter name="right_undist.png" type="bool" value="true" />
+</ParameterList>
+</ParameterList>

@@ -65,9 +65,9 @@ public:
     K1R1_K2R2_K3R3,
     K1R2_K2R4_K3R6,
     K1R3_K2R5_K3R7,
+    NO_SUCH_LENS_DISTORTION_MODEL,
     //DON"T ADD ANY BELOW MAX
-    MAX_LENS_DISTORTION_MODEL,
-    NO_SUCH_LENS_DISTORTION_MODEL
+    MAX_LENS_DISTORTION_MODEL
   };
 
   static std::string to_string(Lens_Distortion_Model in){
@@ -78,7 +78,8 @@ public:
       "VIC3D_LENS_DISTORTION",
       "K1R1_K2R2_K3R3",
       "K1R2_K2R4_K3R6",
-      "K1R3_K2R5_K3R7"
+      "K1R3_K2R5_K3R7",
+      "NO_SUCH_LENS_DISTORTION_MODEL"
     };
     return lensDistStrings[in];
   };
@@ -424,7 +425,8 @@ public:
     const std::vector<S> & sen_x,
     const std::vector<S> & sen_y,
     std::vector<S> & image_x,
-    std::vector<S> & image_y);
+    std::vector<S> & image_y,
+    const Lens_Distortion_Model dist_model_override = NO_SUCH_LENS_DISTORTION_MODEL);
 
   ///converts image coordinates to sensor coordinates (lens distortion^-1, fx,fy,cx,cy)
   /// \param image_x x location after applied lens distortion

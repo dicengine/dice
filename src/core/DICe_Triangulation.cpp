@@ -629,6 +629,19 @@ Triangulation::best_fit_plane(Teuchos::RCP<MultiField> & cx,
   cam_0_to_world_(3,3) = 1.0;
 }
 
+void
+Triangulation::undistort_points(std::vector<scalar_t> & points_x,
+  std::vector<scalar_t> & points_y,
+  const int_t camera_id)const{
+  TEUCHOS_TEST_FOR_EXCEPTION(points_x.size()!=points_y.size()||points_x.size()==0,std::runtime_error,"");
+  std::vector<scalar_t> sen_x(points_x.size(),0.0);
+  std::vector<scalar_t> sen_y(points_x.size(),0.0);
+  // convert the distorted image points to sensor coordinates
+  camera_system_->camera(camera_id)->image_to_sensor(points_x,points_y,sen_x,sen_y);
+  // convert the sensor coordiates back to undistorted image coordiates
+  camera_system_->camera(camera_id)->sensor_to_image(sen_x,sen_y,points_x,points_y,DICe::Camera::NO_LENS_DISTORTION);
+}
+
 scalar_t
 Triangulation::cosine_of_two_vectors(const std::vector<scalar_t> & a,
   const std::vector<scalar_t> & b){

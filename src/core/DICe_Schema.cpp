@@ -2832,7 +2832,8 @@ Schema::space_fill_correlate(const int_t seed_gid,
   std::vector<int_t> & out_gids,
   const int_t num_neigh,
   Teuchos::RCP<kd_tree_2d_t> kd_tree,
-  const scalar_t & epi_error_tol){
+  const scalar_t & epi_error_tol,
+  Teuchos::RCP<Triangulation> tri){
 
   TEUCHOS_TEST_FOR_EXCEPTION(in_gids.size()==0,std::runtime_error,"");
   out_gids.clear();
@@ -2890,7 +2891,10 @@ Schema::space_fill_correlate(const int_t seed_gid,
       const float c = local_field_value(neigh_id,EPI_C_FS);
       const float stereo_x = local_field_value(neigh_id,SUBSET_COORDINATES_X_FS) + cross_u;
       const float stereo_y = local_field_value(neigh_id,SUBSET_COORDINATES_Y_FS) + cross_v;
-      const float dist = (std::abs(a*stereo_x+b*stereo_y+c)/std::sqrt(a*a+b*b));
+      std::vector<scalar_t> sx(1,stereo_x);
+      std::vector<scalar_t> sy(1,stereo_y);
+      tri->undistort_points(sx,sy,1); // right camera
+      const float dist = (std::abs(a*sx[0]+b*sy[0]+c)/std::sqrt(a*a+b*b));
       DEBUG_MSG("Schema::space_fill_correlate(): epipolar error for neighbor " << i << " gid " << neigh_gid << ": " << dist);
       if(dist>epi_error_tol){
         local_field_value(neigh_id,SIGMA_FS) = -1.0;
@@ -2918,9 +2922,17 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
   DEBUG_MSG("Schema::initialize_cross_correlation(): computing subset epipolar coefficients");
   cv::Mat F = tri->fundamental_matrix();
   cv::Mat lines;
+
+  std::vector<scalar_t> pointsx(local_num_subsets_,0.0);
+  std::vector<scalar_t> pointsy(local_num_subsets_,0.0);
+  for(int_t i=0;i<local_num_subsets_;++i){
+    pointsx[i] = local_field_value(i,SUBSET_COORDINATES_X_FS);
+    pointsy[i] = local_field_value(i,SUBSET_COORDINATES_Y_FS);
+  } // get rid of lens distortions for the epipolar constraint
+  tri->undistort_points(pointsx,pointsy,0);// camera 0 since this is for the left camera
   std::vector<cv::Point2f> points(local_num_subsets_);
   for(int_t i=0;i<local_num_subsets_;++i)
-    points[i] = cv::Point2f(local_field_value(i,SUBSET_COORDINATES_X_FS),local_field_value(i,SUBSET_COORDINATES_Y_FS));
+    points[i] = cv::Point2f(pointsx[i],pointsy[i]);
   cv::computeCorrespondEpilines(points,1,F,lines); // epipolar lines for the subset centroids
   assert((int)points.size()==lines.rows);
   for(int_t i=0;i<local_num_subsets_;++i){
@@ -2995,8 +3007,16 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     good_left_y.reserve(left_x.size());
     good_right_x.reserve(left_x.size());
     good_right_y.reserve(left_x.size());
+    std::vector<scalar_t> left_x_undist = left_x;
+    std::vector<scalar_t> right_x_undist = right_x;
+    std::vector<scalar_t> left_y_undist = left_y;
+    std::vector<scalar_t> right_y_undist = right_y;
+
+    // get rid of lens distortions for the epipolar constraint
+    tri->undistort_points(left_x_undist,left_y_undist,0);// camera 0 since this is for the left camera
+    tri->undistort_points(right_x_undist,right_y_undist,1);
     for(size_t i=0;i<left_x.size();++i)
-      featurePoints[i] = cv::Point2f(left_x[i],left_y[i]);
+      featurePoints[i] = cv::Point2f(left_x_undist[i],left_y_undist[i]);
     cv::computeCorrespondEpilines(featurePoints,1,F,featureLines); // epipolar lines for the feature points
 //    cv::Mat epi_img = cv::imread(".dice/fm_space_filling.png",cv::IMREAD_COLOR);
     assert((int)featurePoints.size()==featureLines.rows);
@@ -3005,8 +3025,9 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       const float a = featureLines.at<float>(i,0);
       const float b = featureLines.at<float>(i,1);
       const float c = featureLines.at<float>(i,2);
-      const float dist = (std::abs(a*right_x[i]+b*right_y[i]+c)/std::sqrt(a*a+b*b));
-      DEBUG_MSG("fm point " << i << " xl " << left_x[i] << " yl " << left_y[i] << " xr " << right_x[i] << " yr " << right_y[i] << " dist from epiline " << dist);
+      const float dist = (std::abs(a*right_x_undist[i]+b*right_y_undist[i]+c)/std::sqrt(a*a+b*b));
+      DEBUG_MSG("fm point " << i << " xl (" << left_x[i] << ") " << left_x_undist[i] << " yl (" << left_y[i] << ") " << left_y_undist[i] <<
+        " xr (" << right_x[i] << ") " << right_x_undist[i]  <<  " yr (" << right_y[i] << ") " << right_y_undist[i] << " dist from epiline " << dist);
       if(dist<feature_epi_dist_tol){
         good_left_x.push_back(left_x[i]);
         good_left_y.push_back(left_y[i]);
@@ -3014,6 +3035,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
         good_right_y.push_back(right_y[i]);
       }
     }
+    // TODO Try removing this to see if it works now with the lens distortions accounted for in the epiline tol
     DEBUG_MSG("Schema::initialize_cross_correlation(): num good matches: " << good_left_x.size());
     if(good_left_x.size()<1){ // see if relaxing the tolerance helps
       feature_epi_dist_tol *= 5.0;
@@ -3025,8 +3047,9 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
         const float a = featureLines.at<float>(i,0);
         const float b = featureLines.at<float>(i,1);
         const float c = featureLines.at<float>(i,2);
-        const float dist = (std::abs(a*right_x[i]+b*right_y[i]+c)/std::sqrt(a*a+b*b));
-        DEBUG_MSG("fm point " << i << " xl " << left_x[i] << " yl " << left_y[i] << " xr " << right_x[i] << " yr " << right_y[i] << " dist from epiline " << dist);
+        const float dist = (std::abs(a*right_x_undist[i]+b*right_y_undist[i]+c)/std::sqrt(a*a+b*b));
+        DEBUG_MSG("fm point " << i << " xl (" << left_x[i] << ") " << left_x_undist[i] << " yl (" << left_y[i] << ") " << left_y_undist[i] <<
+          " xr (" << right_x[i] << ") " << right_x_undist[i]  <<  " yr (" << right_y[i] << ") " << right_y_undist[i] << " dist from epiline " << dist);
         if(dist<feature_epi_dist_tol){
           good_left_x.push_back(left_x[i]);
           good_left_y.push_back(left_y[i]);
@@ -3117,7 +3140,10 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       const float c = local_field_value(local_id,EPI_C_FS);
       const float stereo_x = local_field_value(local_id,SUBSET_COORDINATES_X_FS) + cross_u;
       const float stereo_y = local_field_value(local_id,SUBSET_COORDINATES_Y_FS) + cross_v;
-      const float dist = (std::abs(a*stereo_x+b*stereo_y+c)/std::sqrt(a*a+b*b));
+      std::vector<scalar_t> sx(1,stereo_x);
+      std::vector<scalar_t> sy(1,stereo_y);
+      tri->undistort_points(sx,sy,1); // right camera
+      const float dist = (std::abs(a*sx[0]+b*sy[0]+c)/std::sqrt(a*a+b*b));
       DEBUG_MSG("Schema::initialize_cross_correlation(): epipolar error for seed subset: " << dist);
       if(dist>epi_dist_tol){
         local_field_value(local_id,SIGMA_FS) = -1.0;
@@ -3139,7 +3165,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       while(in_gids.size()>0){
         TEUCHOS_TEST_FOR_EXCEPTION(it_count > max_iterations,std::runtime_error,
           "error: inifinte loop detected in space filling initializer"); // guard against infinite loop
-        space_fill_correlate(subset_global_id(local_id),in_gids,out_gids,num_neigh,kd_tree,epi_dist_tol);
+        space_fill_correlate(subset_global_id(local_id),in_gids,out_gids,num_neigh,kd_tree,epi_dist_tol,tri);
         in_gids.clear();
         for(size_t i=0;i<out_gids.size();++i)
           in_gids.push_back(out_gids[i]);
@@ -3154,7 +3180,10 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       const float c = local_field_value(i,EPI_C_FS);
       const float stereo_x = local_field_value(i,SUBSET_COORDINATES_X_FS) + local_field_value(i,SUBSET_DISPLACEMENT_X_FS);
       const float stereo_y = local_field_value(i,SUBSET_COORDINATES_Y_FS) + local_field_value(i,SUBSET_DISPLACEMENT_Y_FS);
-      const float dist = (std::abs(a*stereo_x+b*stereo_y+c)/std::sqrt(a*a+b*b));
+      std::vector<scalar_t> sx(1,stereo_x);
+      std::vector<scalar_t> sy(1,stereo_y);
+      tri->undistort_points(sx,sy,1); // right camera
+      const float dist = (std::abs(a*sx[0]+b*sy[0]+c)/std::sqrt(a*a+b*b));
       local_field_value(i,CROSS_EPI_ERROR_FS) = dist;
 //      DEBUG_MSG("Schema::initialize_cross_correlation(): epipolar error for subset: " << dist);
       if(dist>epi_dist_tol){
@@ -3210,12 +3239,16 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
         const scalar_t A = -1.0*a/b;
         const scalar_t C = -1.0*c/b;
         // compute the coeffs for the line between the good points in right image space
-        const scalar_t x1 = local_field_value(left_neigh_id,SUBSET_COORDINATES_X_FS) + local_field_value(left_neigh_id,SUBSET_DISPLACEMENT_X_FS);
-        const scalar_t y1 = local_field_value(left_neigh_id,SUBSET_COORDINATES_Y_FS) + local_field_value(left_neigh_id,SUBSET_DISPLACEMENT_Y_FS);
-        const scalar_t x2 = local_field_value(right_neigh_id,SUBSET_COORDINATES_X_FS) + local_field_value(right_neigh_id,SUBSET_DISPLACEMENT_X_FS);
-        const scalar_t y2 = local_field_value(right_neigh_id,SUBSET_COORDINATES_Y_FS) + local_field_value(right_neigh_id,SUBSET_DISPLACEMENT_Y_FS);
-        const scalar_t B = (y2-y1)/(x2-x1);
-        const scalar_t D = y1 - B*x1;
+
+        std::vector<scalar_t> neighx(2,0.0);
+        std::vector<scalar_t> neighy(2,0.0);
+        neighx[0] = local_field_value(left_neigh_id,SUBSET_COORDINATES_X_FS) + local_field_value(left_neigh_id,SUBSET_DISPLACEMENT_X_FS); // at this point the displacement is between the left and right image location for this subset centroid
+        neighy[0] = local_field_value(left_neigh_id,SUBSET_COORDINATES_Y_FS) + local_field_value(left_neigh_id,SUBSET_DISPLACEMENT_Y_FS);
+        neighx[1] = local_field_value(right_neigh_id,SUBSET_COORDINATES_X_FS) + local_field_value(right_neigh_id,SUBSET_DISPLACEMENT_X_FS);
+        neighy[1] = local_field_value(right_neigh_id,SUBSET_COORDINATES_Y_FS) + local_field_value(right_neigh_id,SUBSET_DISPLACEMENT_Y_FS);
+        tri->undistort_points(neighx,neighy,1);
+        const scalar_t B = (neighy[1]-neighy[0])/(neighx[1]-neighx[0]);
+        const scalar_t D = neighy[0] - B*neighx[0];
         if(A-B==0.0) continue;
         const scalar_t px = (D-C)/(A-B);
         const scalar_t py = A*(D-C)/(A-B) + C;
@@ -3254,7 +3287,10 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
         // check the epipolar distance
         const float stereo_x = local_field_value(i,SUBSET_COORDINATES_X_FS) + cross_u;
         const float stereo_y = local_field_value(i,SUBSET_COORDINATES_Y_FS) + cross_v;
-        const float dist = (std::abs(a*stereo_x+b*stereo_y+c)/std::sqrt(a*a+b*b));
+        std::vector<scalar_t> sx(1,stereo_x);
+        std::vector<scalar_t> sy(1,stereo_y);
+        tri->undistort_points(sx,sy,1); // right camera
+        const float dist = (std::abs(a*sx[0]+b*sy[0]+c)/std::sqrt(a*a+b*b));
         DEBUG_MSG("Schema::initialize_cross_correlation(): epipolar error for second pass subset: " << dist);
         if(dist>epi_dist_tol){
           local_field_value(i,SIGMA_FS) = -1.0;
@@ -3275,7 +3311,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 //        while(in_gids.size()>0){
 //          TEUCHOS_TEST_FOR_EXCEPTION(it_count > max_iterations,std::runtime_error,
 //            "error: inifinte loop detected in space filling initializer"); // guard against infinite loop
-//          space_fill_correlate(subset_global_id(i),in_gids,out_gids,num_neigh,kd_tree,epi_dist_tol);
+//          space_fill_correlate(subset_global_id(i),in_gids,out_gids,num_neigh,kd_tree,epi_dist_tol,tri);
 //          in_gids.clear();
 //          for(size_t i=0;i<out_gids.size();++i)
 //            in_gids.push_back(out_gids[i]);
