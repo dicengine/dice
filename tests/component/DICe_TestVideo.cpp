@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
       for(size_t i=0;i<w;++i){
         size_t value = i+j+frame;
         if(std::abs((scalar_t)img_mp4.at<uchar>(j,i)-value)>tol){
-          *outStream << "mp4 pixel value fail. is " << (int_t)img_mp4.at<uchar>(j,i) << " should be " << value << std::endl;
+          *outStream << "frame " << frame << " mp4 pixel value fail. is " << (int_t)img_mp4.at<uchar>(j,i) << " should be " << value << std::endl;
           count_fail_mp4 = true;
         }
 //        if(std::abs((scalar_t)img_avi.at<uchar>(j,i)-value)>tol){
@@ -182,6 +182,10 @@ int main(int argc, char *argv[]) {
 //        }
       }
     }
+  }
+  if(count_fail_mp4){
+    errorFlag++;
+    *outStream << "Error count values not correct for mp4" << std::endl;
   }
 
   *outStream << "--- End test ---" << std::endl;
