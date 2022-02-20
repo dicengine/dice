@@ -632,12 +632,21 @@ Subset::noise_std_dev(Teuchos::RCP<Image_<S>> image,
   int_t max_x = cx_;
   int_t min_y = cy_;
   int_t max_y = cy_;
+  int_t num_deactivated = 0;
   for(int_t i=0;i<num_pixels();++i){
-    if(is_deactivated_this_step(i)||!is_active(i)) continue;
+    if(is_deactivated_this_step(i)||!is_active(i)){
+      num_deactivated++;
+      continue;
+    }
     if(x(i) < min_x) min_x = x(i);
     if(x(i) > max_x) max_x = x(i);
     if(y(i) < min_y) min_y = y(i);
     if(y(i) > max_y) max_y = y(i);
+  }
+  if(num_deactivated==num_pixels()){
+    // all of the pixels are outisde the field of view
+    DEBUG_MSG("Subset::noise_std_dev(): no active pixels setting noise to -1.0 to indicate failed subset");
+    return -1.0; // indicated failed noise calc
   }
 
   scalar_t u = 0.0;

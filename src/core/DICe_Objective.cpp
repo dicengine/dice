@@ -155,6 +155,10 @@ Objective::sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
 
   // compute the noise std dev. of the image:
   noise_level = subset_->noise_std_dev(schema_->def_img(subset_->sub_image_id()),shape_function);
+  if(noise_level<0.0){
+    DEBUG_MSG("Objective::sigma(): Subset " << correlation_point_global_id_ << " sigma: " << -1.0 << " due to noise std dev failed");
+    return -1.0;
+  }
   // sum up the grads in x and y:
   scalar_t sum_gx = 0.0;
   scalar_t sum_gy = 0.0;
