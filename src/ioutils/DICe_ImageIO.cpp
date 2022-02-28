@@ -306,7 +306,7 @@ void read_image(const char * file_name,
     Teuchos::RCP<cv::VideoCapture> vc = DICe::utils::Video_Singleton::instance().video_capture(video_file);
     width = sub_w==0?(int_t)vc->get(cv::CAP_PROP_FRAME_WIDTH):sub_w;
     height = sub_h==0?(int_t)vc->get(cv::CAP_PROP_FRAME_HEIGHT):sub_h;
-    const double fps = vc->get(CV_CAP_PROP_FPS);
+    const double fps = vc->get(cv::CAP_PROP_FPS);
     if(intensities.size()==0)
       intensities = Teuchos::ArrayRCP<S>(width*height,0.0);
     for(int_t i=0;i<width*height;++i)
@@ -323,7 +323,7 @@ void read_image(const char * file_name,
       if((int_t)vc->get(cv::CAP_PROP_POS_FRAMES)!=i){ // only seek in thev video file if you need to, also use time to get frame instead of POS to avoid keyframe issue with mp4
         TEUCHOS_TEST_FOR_EXCEPTION(fps<=0.0,std::runtime_error,"invalid frame rate");
           const double frame_time = 1000.0 * i / fps;
-          vc->set(CV_CAP_PROP_POS_MSEC,frame_time);
+          vc->set(cv::CAP_PROP_POS_MSEC,frame_time);
       }
       cv::Mat frame;
       if(!vc->read(frame)||frame.empty()){
