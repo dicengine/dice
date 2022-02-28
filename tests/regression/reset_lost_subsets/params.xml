@@ -20,6 +20,5 @@
 <Parameter name="GAMMA" type="bool" value="true" />
 <Parameter name="BETA" type="bool" value="true" />
 <Parameter name="STATUS_FLAG" type="bool" value="true" />
-<Parameter name="UNCERTAINTY" type="bool" value="true" />
 </ParameterList>
 </ParameterList>
