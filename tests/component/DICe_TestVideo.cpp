@@ -72,120 +72,52 @@ int main(int argc, char *argv[]) {
 
   // create a basline image to use as a
 
-  const int_t w = 100;
-  const int_t h = 100;
-  const int_t num_frames = 5;
-  int_t fps = 1;
+  const int_t w = 640;
+  const int_t h = 480;
+  const double fps = 26.777;
+  const int_t num_frames = 31;
 
-  // Code used to create the videos:
+  Teuchos::RCP<cv::VideoCapture> cup = DICe::utils::Video_Singleton::instance().video_capture("./images/cup.mp4");
+  if(cup->get(cv::CAP_PROP_FRAME_WIDTH)!=w){
+    errorFlag++;
+    *outStream << "Error, cup mp4 width " << cup->get(cv::CAP_PROP_FRAME_WIDTH) << " is not correct " << w << std::endl;
+  }
+  if(cup->get(cv::CAP_PROP_FRAME_HEIGHT)!=h){
+    errorFlag++;
+    *outStream << "Error, cup mp4 height " << cup->get(cv::CAP_PROP_FRAME_HEIGHT) << " is not correct " << h << std::endl;
+  }
+  if(std::abs(cup->get(cv::CAP_PROP_FPS)-fps) > 0.1){
+    errorFlag++;
+    *outStream << "Error fps " << cup->get(cv::CAP_PROP_FPS) << " is not correct for mp4" << std::endl;
+  }
+  if(cup->get(cv::CAP_PROP_FRAME_COUNT)!=num_frames){
+    errorFlag++;
+    *outStream << "Error num_frames " << cup->get(cv::CAP_PROP_FRAME_COUNT) << " is not correct for mp4" << std::endl;
+  }
 
-//  int_t codec_mp4 = cv::VideoWriter::fourcc('M', 'P', '4', 'V');
-////  int_t codec_avi = cv::VideoWriter::fourcc('m', 'j', 'p', 'g');
-//  int_t codec_avi = cv::VideoWriter::fourcc('I', '4', '2', '0');
-////  int_t codec_avi = cv::VideoWriter::fourcc('P', 'I', 'M', '1');
-//  cv::VideoWriter video_mp4("video.mp4",codec_mp4,fps, cv::Size(w,h),false);
-//  cv::VideoWriter video_avi("video.avi",codec_avi,fps, cv::Size(w,h),false);
-//  for(int_t frame=0;frame<num_frames;++frame){
-//    cv::Mat img = cv::Mat::zeros(cv::Size(w,h),CV_8UC1);
-//    for(size_t j=0;j<h;++j){
-//      for(size_t i=0;i<w;++i){
-//        size_t value = i+j+frame;
-////        //Note: in the images that are read back in, the failed pixels should be filtered out
-////        if(i==j&&i%10==0&&i!=0){ // place failed pixels along the diagonal
-////          value = 255;
-////        }
-//        img.at<uchar>(j,i) = value;
-//      }
-//    }
-//    video_mp4.write(img);
-//    video_avi.write(img);
-//  }
-//  video_mp4.release();
-//  video_avi.release();
-
-  // test frame width/height
-  int_t w_mp4 = 0, h_mp4 = 0;
-//  int_t w_avi = 0, h_avi = 0;
-  DICe::utils::read_image_dimensions("./images/video_0.mp4",w_mp4,h_mp4);
-//  DICe::utils::read_image_dimensions("video_0.avi",w_avi,h_avi);
-  if(w_mp4!=w){
-    errorFlag++;
-    *outStream << "Error, mp4 width " << w_mp4 << " is not correct " << w << std::endl;
-  }
-  if(h_mp4!=h){
-    errorFlag++;
-    *outStream << "Error, mp4 height " << h_mp4 << " is not correct " << h << std::endl;
-  }
-//  if(w_avi!=w){
-//    errorFlag++;
-//    *outStream << "Error, avi width " << w_avi << " is not correct " << w << std::endl;
-//  }
-//  if(h_avi!=h){
-//    errorFlag++;
-//    *outStream << "Error, avi height " << h_mp4 << " is not correct " << h << std::endl;
-//  }
-  Teuchos::RCP<cv::VideoCapture> vc_mp4 = DICe::utils::Video_Singleton::instance().video_capture("./images/video.mp4");
-//  Teuchos::RCP<cv::VideoCapture> vc_avi = DICe::utils::Video_Singleton::instance().video_capture("video.avi");
-  if(vc_mp4->get(cv::CAP_PROP_FRAME_WIDTH)!=w){
-    errorFlag++;
-    *outStream << "Error, vc mp4 width " << vc_mp4->get(cv::CAP_PROP_FRAME_WIDTH) << " is not correct " << w << std::endl;
-  }
-  if(vc_mp4->get(cv::CAP_PROP_FRAME_HEIGHT)!=h){
-    errorFlag++;
-    *outStream << "Error, vc mp4 height " << vc_mp4->get(cv::CAP_PROP_FRAME_HEIGHT) << " is not correct " << h << std::endl;
-  }
-//  if(vc_avi->get(cv::CAP_PROP_FRAME_WIDTH)!=w){
-//    errorFlag++;
-//    *outStream << "Error, vc avi width " << vc_avi->get(cv::CAP_PROP_FRAME_WIDTH) << " is not correct " << w << std::endl;
-//  }
-//  if(vc_avi->get(cv::CAP_PROP_FRAME_HEIGHT)!=h){
-//    errorFlag++;
-//    *outStream << "Error, vc avi height " << vc_avi->get(cv::CAP_PROP_FRAME_HEIGHT) << " is not correct " << h << std::endl;
-//  }
-  if(vc_mp4->get(cv::CAP_PROP_FPS)!=fps){
-    errorFlag++;
-    *outStream << "Error fps is not correct for mp4" << std::endl;
-  }
-//  if(vc_avi->get(cv::CAP_PROP_FPS)!=fps){
-//    errorFlag++;
-//    *outStream << "Error fps is not correct for avi" << std::endl;
-//  }
-  if(vc_mp4->get(cv::CAP_PROP_FRAME_COUNT)!=num_frames){
-    errorFlag++;
-    *outStream << "Error fps is not correct for mp4" << std::endl;
-  }
-//  if(vc_avi->get(cv::CAP_PROP_FRAME_COUNT)!=num_frames){
-//    errorFlag++;
-//    *outStream << "Error fps is not correct for avi" << std::endl;
+  // use this code to output the test images
+//  for(int_t i=0;i<5;++i){
+//    std::stringstream filename, fileout;
+//    filename << "./images/cup_" << i << ".mp4";
+//    fileout << "./images/cup_" << i << ".png";
+//    DICe::Image img(filename.str().c_str());
+//    img.write(fileout.str());
 //  }
 
-  const int_t tol = 20; // counts (loose due to compression)
-  bool count_fail_mp4 = false;
-//  bool count_fail_avi = false;
-
-  for(int_t frame=0;frame<num_frames;++frame){
-    std::stringstream img_name_mp4, img_name_avi;
-    img_name_mp4 << "./images/video_" << frame << ".mp4";
-//    img_name_avi << "video_" << frame << ".avi";
-    cv::Mat img_mp4 = DICe::utils::read_image(img_name_mp4.str().c_str());
-//    cv::Mat img_avi = DICe::utils::read_image(img_name_avi.str().c_str());
-    for(size_t j=0;j<h;++j){
-      for(size_t i=0;i<w;++i){
-        size_t value = i+j+frame;
-        if(std::abs((scalar_t)img_mp4.at<uchar>(j,i)-value)>tol){
-          *outStream << "frame " << frame << " mp4 pixel value fail. is " << (int_t)img_mp4.at<uchar>(j,i) << " should be " << value << std::endl;
-          count_fail_mp4 = true;
-        }
-//        if(std::abs((scalar_t)img_avi.at<uchar>(j,i)-value)>tol){
-//          *outStream << "avi pixel value fail. is " << (int_t)img_avi.at<uchar>(j,i) << " should be " << value << std::endl;
-//          count_fail_avi = true;
-//        }
-      }
+  for(int_t i=0;i<5;++i){
+    std::stringstream filename, filegold, fileout;
+    filename << "./images/cup_" << i << ".mp4";
+    filegold << "./images/cup_" << i << ".png";
+    fileout << "cup_" << i << ".png";
+    Teuchos::RCP<DICe::Image> img = Teuchos::rcp(new DICe::Image(filename.str().c_str()));
+    img->write(fileout.str());
+    Teuchos::RCP<DICe::Image> img_gold = Teuchos::rcp(new DICe::Image(filegold.str().c_str()));
+    const scalar_t diff = img->diff(img_gold);
+    *outStream << "Testing frame " << i << " diff " << diff << std::endl;
+    if(diff > w*h){
+      errorFlag++;
+      *outStream << "Error image diff too high" << std::endl;
     }
-  }
-  if(count_fail_mp4){
-    errorFlag++;
-    *outStream << "Error count values not correct for mp4" << std::endl;
   }
 
   *outStream << "--- End test ---" << std::endl;
