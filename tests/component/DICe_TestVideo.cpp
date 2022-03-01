@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
   const int_t w = 640;
   const int_t h = 480;
   const double fps = 26.777;
-  const int_t num_frames = 31;
+  const int_t num_frames = 217;
 
   Teuchos::RCP<cv::VideoCapture> cup = DICe::utils::Video_Singleton::instance().video_capture("./images/cup.mp4");
   if(cup->get(cv::CAP_PROP_FRAME_WIDTH)!=w){
@@ -96,21 +96,21 @@ int main(int argc, char *argv[]) {
   }
 
   // use this code to output the test images
-//  for(int_t i=0;i<5;++i){
+//  for(int_t i=30;i<50;++i){
 //    std::stringstream filename, fileout;
 //    filename << "./images/cup_" << i << ".mp4";
-//    fileout << "./images/cup_" << i << ".png";
+//    fileout << "cup_" << i << ".png";
 //    DICe::Image img(filename.str().c_str());
 //    img.write(fileout.str());
 //  }
 
-  for(int_t i=0;i<5;++i){
+  for(int_t i=30;i<50;++i){
     std::stringstream filename, filegold, fileout;
     filename << "./images/cup_" << i << ".mp4";
     filegold << "./images/cup_" << i << ".png";
-    fileout << "cup_" << i << ".png";
+    //fileout << "cup_" << i << ".png";
     Teuchos::RCP<DICe::Image> img = Teuchos::rcp(new DICe::Image(filename.str().c_str()));
-    img->write(fileout.str());
+    //img->write(fileout.str());
     Teuchos::RCP<DICe::Image> img_gold = Teuchos::rcp(new DICe::Image(filegold.str().c_str()));
     const scalar_t diff = img->diff(img_gold);
     *outStream << "Testing frame " << i << " diff " << diff << std::endl;
