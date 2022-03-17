@@ -201,13 +201,23 @@ int_t opencv_server(int argc, char *argv[]){
     // split the parameters up into input and tracklib and call tracklib_driver
     Teuchos::RCP<Teuchos::ParameterList> file_params = Teuchos::rcp( new Teuchos::ParameterList());
     Teuchos::RCP<Teuchos::ParameterList> tracking_params = Teuchos::rcp( new Teuchos::ParameterList());
-    file_params->set("cine_file",input_params.get<std::string>("cine_file"));
-    file_params->set("stereo_cine_file",input_params.get<std::string>("stereo_cine_file"));
-    file_params->set("cine_ref_index",input_params.get<int>("cine_ref_index"));
-    file_params->set("cine_start_index",input_params.get<int>("cine_start_index"));
-    file_params->set("cine_preview_index",input_params.get<int>("cine_preview_index"));
-    file_params->set("cine_skip_index",input_params.get<int>("cine_skip_index"));
-    file_params->set("cine_end_index",input_params.get<int>("cine_end_index"));
+    if(input_params.isParameter("cine_file")){
+      file_params->set("cine_file",input_params.get<std::string>("cine_file"));
+      file_params->set("stereo_cine_file",input_params.get<std::string>("stereo_cine_file"));
+      file_params->set("cine_ref_index",input_params.get<int>("cine_ref_index"));
+      file_params->set("cine_start_index",input_params.get<int>("cine_start_index"));
+      file_params->set("cine_preview_index",input_params.get<int>("cine_preview_index"));
+      file_params->set("cine_skip_index",input_params.get<int>("cine_skip_index"));
+      file_params->set("cine_end_index",input_params.get<int>("cine_end_index"));
+    }else{
+      file_params->set("video_file",input_params.get<std::string>("video_file"));
+      file_params->set("stereo_video_file",input_params.get<std::string>("stereo_video_file"));
+      file_params->set("video_ref_index",input_params.get<int>("video_ref_index"));
+      file_params->set("video_start_index",input_params.get<int>("video_start_index"));
+      file_params->set("video_preview_index",input_params.get<int>("video_preview_index"));
+      file_params->set("video_skip_index",input_params.get<int>("video_skip_index"));
+      file_params->set("video_end_index",input_params.get<int>("video_end_index"));
+    }
     file_params->set("camera_system_file",input_params.get<std::string>("camera_system_file"));
 //    file_params->set("display_file_left",input_params.get<std::string>("display_file_left"));
 //    file_params->set("display_file_right",input_params.get<std::string>("display_file_right"));
@@ -375,7 +385,7 @@ int_t opencv_adaptive_threshold(Mat & img, Teuchos::ParameterList & options){
 
 DICE_LIB_DLL_EXPORT
 int_t opencv_create_cine_background_image(Teuchos::ParameterList & options){
-  TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_cine_file_name),std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter("video_file"),std::runtime_error,"");
   const std::string cine_file = options.get<std::string>(opencv_server_cine_file_name);
   TEUCHOS_TEST_FOR_EXCEPTION(!options.isParameter(opencv_server_background_file_name),std::runtime_error,"");
   const std::string background_file = options.get<std::string>(opencv_server_background_file_name);
