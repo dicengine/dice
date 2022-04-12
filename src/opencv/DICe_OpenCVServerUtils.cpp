@@ -222,8 +222,13 @@ int_t opencv_server(int argc, char *argv[]){
 //    file_params->set("display_file_left",input_params.get<std::string>("display_file_left"));
 //    file_params->set("display_file_right",input_params.get<std::string>("display_file_right"));
 
-    tracking_params->set("thresh_left",input_params.get<int>("thresh_left"));
-    tracking_params->set("thresh_right",input_params.get<int>("thresh_right"));
+    tracking_params->set("threshold_method",input_params.get<std::string>("threshold_method"));
+    tracking_params->set("min_thresh_left",input_params.get<int>("min_thresh_left"));
+    tracking_params->set("max_thresh_left",input_params.get<int>("max_thresh_left"));
+    tracking_params->set("steps_thresh_left",input_params.get<int>("steps_thresh_left"));
+    tracking_params->set("min_thresh_right",input_params.get<int>("min_thresh_right"));
+    tracking_params->set("max_thresh_right",input_params.get<int>("max_thresh_right"));
+    tracking_params->set("steps_thresh_right",input_params.get<int>("steps_thresh_right"));
     tracking_params->set("max_pt_density",input_params.get<double>("max_pt_density"));
     tracking_params->set("min_area",input_params.get<int>("min_area"));
     tracking_params->set("max_area",input_params.get<int>("max_area"));
