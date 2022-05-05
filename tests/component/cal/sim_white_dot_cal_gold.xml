@@ -9,7 +9,7 @@
     <Parameter name="FY" type="double" value="6667.8" />  
     <Parameter name="K1" type="double" value="0.03239" />
     <Parameter name="K2" type="double" value="-1.044" />
-    <Parameter name="K3" type="double" value="31.709" />
+    <Parameter name="K3" type="double" value="20.433" />
     <Parameter name="TX" type="double" value="-18.9965" />
     <Parameter name="TY" type="double" value="28.8823" />
     <Parameter name="TZ" type="double" value="386.554" />

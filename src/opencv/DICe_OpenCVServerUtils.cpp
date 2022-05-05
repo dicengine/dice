@@ -717,27 +717,22 @@ int_t opencv_dot_targets(Mat & img,
   //  std::cout << "opencv_dot_targets():     using threshold: " << i_thresh << std::endl;
   return_thresh = i_thresh;
 
-  // determine a threshold from the gray levels between the keypoints
-  int_t xstart, xend, ystart, yend;
-  float maxgray, mingray;
-  xstart = key_points[0].pt.x;
-  xend = key_points[1].pt.x;
-  if (xend < xstart) {
-    xstart = key_points[1].pt.x;
-    xend = key_points[0].pt.x;
-  }
-  ystart = key_points[0].pt.y;
-  yend = key_points[1].pt.y;
-  if (yend < ystart) {
-    ystart = key_points[1].pt.y;
-    yend = key_points[0].pt.y;
-  }
-  const int_t slope = (yend - ystart)/(xend - xstart);
-  maxgray = img_cpy.at<uchar>(ystart, xstart);
-  mingray = maxgray;
-  for (int_t ix = xstart; ix <= xend; ix++) {
-    const int_t iy = ystart + (ix-xstart)*slope;
-    const int_t curgray = img_cpy.at<uchar>(iy, ix);
+  // march along vector from keypoint 0 to keypoint 1 to geta sense of the gray levels
+  float du = key_points[1].pt.x - key_points[0].pt.x;
+  float dv = key_points[1].pt.y - key_points[0].pt.y;
+  float mag = std::sqrt(du*du + dv*dv);
+  TEUCHOS_TEST_FOR_EXCEPTION(mag==0.0,std::runtime_error,"Error, zero distance between keypoints encountered");
+  float nu = du/mag;
+  float nv = dv/mag;
+
+  int_t xstart = key_points[0].pt.x;
+  int_t ystart = key_points[0].pt.y;
+  float maxgray = img_cpy.at<uchar>(ystart,xstart);
+  float mingray = img_cpy.at<uchar>(ystart,xstart);
+  for(int_t r = 1; r < (int_t)mag; ++r){
+    int_t ix = xstart + r*nu;
+    int_t iy = ystart + r*nv;
+    const int_t curgray = img_cpy.at<uchar>(iy,ix);
     if (maxgray < curgray) maxgray = curgray;
     if (mingray > curgray) mingray = curgray;
   }
@@ -745,7 +740,6 @@ int_t opencv_dot_targets(Mat & img,
   DEBUG_MSG("  min gray value (inside target keypoints): " << mingray << " max gray value: " << maxgray);
   DEBUG_MSG("  getting the rest of the dots using average gray intensity value as threshold");
   DEBUG_MSG("    threshold to get dots: " << i_thresh);
-
 
   // get the rest of the dots
   options.set<bool>("donut_test",false);
@@ -755,7 +749,7 @@ int_t opencv_dot_targets(Mat & img,
   DEBUG_MSG("    prospective grid points found: " << num_dots);
   if(num_dots <= 0){
     std::cout << "opencv_dot_targets(): zero dots found" << std::endl;
-    return 2;
+    return 1;
   }
   for (int_t n = 0; n < num_dots; n++) {
     if(img.size().height>800){

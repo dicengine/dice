@@ -587,6 +587,7 @@ Calibration::extract_dot_target_points(){
         include_set_[i_image] = false;
         continue;
       }
+      Mat img_cpy = img.clone(); // keep a copy of the image in case it needs to be reset after having dots added, etc.
       TEUCHOS_TEST_FOR_EXCEPTION(img.size()!=image_size_,std::runtime_error,"");
       std::vector<KeyPoint> key_points;
       std::vector<KeyPoint> img_points;
@@ -601,6 +602,7 @@ Calibration::extract_dot_target_points(){
         input_params_.set(opencv_server_threshold_end,return_thresh);
         input_params_.set(opencv_server_threshold_step,return_thresh);
       }else if(i_image!=0&&error_code==1){
+        img = img_cpy.clone();
         input_params_.set(opencv_server_threshold_start,orig_thresh_start); // reset the thresholds and re-run the auto thresholding routine
         input_params_.set(opencv_server_threshold_end,orig_thresh_end);
         input_params_.set(opencv_server_threshold_step,orig_thresh_step);
@@ -612,6 +614,7 @@ Calibration::extract_dot_target_points(){
           input_params_.set(opencv_server_threshold_step,return_thresh);
         }
       }else if(i_image==0&&error_code==1){
+        img = img_cpy.clone();
         // check to see if the min_blob_size needs to be adjusted, first try 10 (smaller)
         input_params_.set<int_t>(opencv_server_min_blob_size,10);
         DEBUG_MSG("Calibration::extract_dot_target_points(): resetting the min_blob_size to 10 and trying again.");
@@ -694,7 +697,7 @@ Calibration::extract_dot_target_points(){
         }
       }
     }
-    DEBUG_MSG("numer of common dots: " << num_common_pts);
+    DEBUG_MSG("number of common dots: " << num_common_pts);
     if (num_common_pts < (num_fiducials_x_*num_fiducials_y_*include_image_set_tol) && include_set_[i_image]){
       //exclude the set
       std::cout << "*** warning: excluding this image set due to not enough dots common among all images" << std::endl;
