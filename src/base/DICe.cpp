@@ -42,7 +42,7 @@
 #include <DICe.h>
 
 #include <iostream>
-#include <string.h>
+#include <string>
 
 #if DICE_MPI
   #include <mpi.h>
