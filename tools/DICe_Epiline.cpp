@@ -58,20 +58,27 @@ int main(int argc, char *argv[]) {
   DICe::initialize(argc, argv);
 
   // read the parameters from the input file:
-  if(argc!=5){
-    std::cout << "Usage: DICe_Epiline <x> <y> <img_width> <cal_file> <which_image>" << std::endl;
+  if(argc!=7){
+    std::cout << "Usage: DICe_Epiline <x> <y> <img_width> <img_height> <cal_file> <which_image>" << std::endl;
     exit(1);
   }
 
   const scalar_t x = std::atof(argv[1]);
   const scalar_t y = std::atof(argv[2]);
-  const std::string cal_file = argv[3];
-  const int which_image = std::atoi(argv[4]);
+  const int_t imw = std::atoi(argv[3]);
+  const int_t imh = std::atoi(argv[4]);
+  const std::string cal_file = argv[5];
+  const int which_image = std::atoi(argv[6]);
   std::string output_file = "./.dice/.epiline.txt";
 
-  std::cout << "DICe_Epiline: converting point " << x << " " << y << " using file " << cal_file << " which image " << which_image << std::endl;
 
-  Teuchos::RCP<DICe::Triangulation> tri = Teuchos::rcp(new DICe::Triangulation(cal_file));
+  Teuchos::RCP<Teuchos::ParameterList> input_params = Teuchos::rcp( new Teuchos::ParameterList());
+  input_params->set("camera_system_file",cal_file);
+  DICe::update_vic3d_cal_input(input_params,imw,imh); // some vivc3d formats don't have the image width and height as parameters, if that's the case, add them manually
+
+  std::cout << "DICe_Epiline: converting point " << x << " " << y << " using file " << input_params->get<std::string>("camera_system_file") << " which image " << which_image << std::endl;
+
+  Teuchos::RCP<DICe::Triangulation> tri = Teuchos::rcp(new DICe::Triangulation(input_params->get<std::string>("camera_system_file")));
   const int img_width = tri->image_width();
   cv::Mat F = tri->fundamental_matrix();
   cv::Mat lines;
