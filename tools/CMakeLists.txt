@@ -83,10 +83,13 @@ target_link_libraries(DICe_Cal    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
 add_executable(DICe_Epiline           DICe_Epiline.cpp)
 target_link_libraries(DICe_Epiline    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
 
+add_executable(DICe_Rectify           DICe_Rectify.cpp)
+target_link_libraries(DICe_Rectify    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
+
 add_executable(DICe_ImageDistorter           DICe_ImageDistorter.cpp)
 target_link_libraries(DICe_ImageDistorter    ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES})
 
-set_target_properties(DICe_CineToTiff DICe_VideoStat DICe_Diff DICe_DiffAvg DICe_CrossInit DICe_Cal DICe_Epiline DICe_ImageDistorter
+set_target_properties(DICe_CineToTiff DICe_VideoStat DICe_Diff DICe_DiffAvg DICe_CrossInit DICe_Cal DICe_Epiline DICe_Rectify DICe_ImageDistorter
   PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"
   ARCHIVE_OUTPUT_DIRECTORY "${DICE_OUTPUT_PREFIX}/lib"

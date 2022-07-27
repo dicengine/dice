@@ -206,6 +206,20 @@ public:
     return matF;
   }
 
+  /// compute the camera matrix and return it as an opencv mat
+  cv::Mat camera_matrix(const int index) const;
+
+  /// compute the distortion matrix and return it as an opencv mat
+  cv::Mat distortion_matrix(const int index) const;
+
+  /// compute the rotation matrix and return it as an opencv mat
+  /// this is the rotation matrix from camera 0 to camera 1
+  cv::Mat rotation_matrix() const;
+
+  /// compute the translation matrix and return it as an opencv mat
+  /// these are the translations from camera 0 to camera 1
+  cv::Mat translation_matrix() const;
+
   /// correct the lens distortion with a radial model
   /// \param x_s x sensor coordinate to correct, modified in place
   /// \param y_s y sensor coordinate to correct, modified in place

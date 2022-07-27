@@ -1295,6 +1295,51 @@ Triangulation::project_left_to_right_sensor_coords(const scalar_t & xl,
   yr = (pr[3]*xt + pr[4]*yt + pr[5])/(pr[6]*xt + pr[7]*yt + pr[8]);
 }
 
+/// compute the fundamental matrix and return it as an opencv mat
+cv::Mat
+Triangulation::camera_matrix(const int index) const{
+  cv::Mat mat = cv::Mat::zeros(3, 3, CV_64F); // the data type here is double since opencv routines that use these matrices require this
+  mat.at<double>(0,0) = cal_intrinsics_[index][Camera::FX];
+  mat.at<double>(0,2) = cal_intrinsics_[index][Camera::CX];
+  mat.at<double>(1,1) = cal_intrinsics_[index][Camera::FY];
+  mat.at<double>(1,2) = cal_intrinsics_[index][Camera::CY];
+  mat.at<double>(2,2) = 1.0;
+  return mat;
+}
+
+/// compute the distortion matrix and return it as an opencv mat
+cv::Mat
+Triangulation::distortion_matrix(const int index) const{
+  cv::Mat mat = cv::Mat::zeros(5, 1, CV_64F);
+  mat.at<double>(0) = cal_intrinsics_[index][Camera::K1];
+  mat.at<double>(1) = cal_intrinsics_[index][Camera::K2];
+  mat.at<double>(2) = cal_intrinsics_[index][Camera::P1];
+  mat.at<double>(3) = cal_intrinsics_[index][Camera::P2];
+  mat.at<double>(4) = cal_intrinsics_[index][Camera::K3];
+  return mat;
+}
+
+/// compute the translation matrix and return it as an opencv mat
+cv::Mat
+Triangulation::translation_matrix() const{
+  cv::Mat mat = cv::Mat::zeros(3, 1, CV_64F);
+  for(size_t i=0;i<3;++i)
+	  mat.at<double>(i) = cam_0_to_cam_1_(i,3);
+  return mat;
+}
+
+/// compute the rotation matrix and return it as an opencv mat
+cv::Mat
+Triangulation::rotation_matrix() const{
+  cv::Mat mat = cv::Mat::zeros(3, 3, CV_64F);
+  for(size_t i=0;i<3;++i){
+	  for(size_t j=0;j<3;++j){
+		  mat.at<double>(i,j) = cam_0_to_cam_1_(i,j);
+	  }
+  }
+  return mat;
+}
+
 void update_legacy_txt_cal_input(const Teuchos::RCP<Teuchos::ParameterList> & input_params){
   DEBUG_MSG("update_legacy_txt_cal_input(): function called");
   if(!input_params->isParameter(DICe::calibration_parameters_file)) return; // the legacy txt files would have had this as an input parameter
