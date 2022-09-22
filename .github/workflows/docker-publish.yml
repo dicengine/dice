@@ -48,8 +48,7 @@ jobs:
 
       # Workaround: https://github.com/docker/build-push-action/issues/461
       - name: Setup Docker buildx
-        uses: 
-docker/setup-buildx-action@79abd3f86f79a9d68a23c75a09a9a85889262adf
+        uses: docker/setup-buildx-action@79abd3f86f79a9d68a23c75a09a9a85889262adf
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
@@ -65,8 +64,7 @@ docker/setup-buildx-action@79abd3f86f79a9d68a23c75a09a9a85889262adf
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
         id: meta
-        uses: 
-docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
@@ -74,8 +72,7 @@ docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
-        uses: 
-docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
+        uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
@@ -86,19 +83,15 @@ docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
 
 
       # Sign the resulting Docker image digest except on PRs.
-      # This will only write to the public Rekor transparency log when the 
-Docker
-      # repository is public to avoid leaking data.  If you would like to 
-publish
-      # transparency data even for private images, pass --force to cosign 
-below.
+      # This will only write to the public Rekor transparency log when the Docker
+      # repository is public to avoid leaking data.  If you would like to publish
+      # transparency data even for private images, pass --force to cosign below.
       # https://github.com/sigstore/cosign
       - name: Sign the published Docker image
         if: ${{ github.event_name != 'pull_request' }}
         env:
           COSIGN_EXPERIMENTAL: "true"
-        # This step uses the identity token to provision an ephemeral 
-certificate
+        # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign 
 sign {}@${{ steps.build-and-push.outputs.digest }}
