@@ -144,8 +144,8 @@ if(DEFINED NetCDF_DIR)
   MESSAGE(STATUS "Looking for NetCDF in: ${NetCDF_DIR}")
   find_library(NetCDF_lib NAMES libnetcdf.a netcdf PATHS ${NetCDF_DIR})
   MESSAGE(STATUS "Looking for HDF5 in: ${HDF5_DIR}")
-  find_library(HDF5_lib NAMES libhdf5.a hdf5 PATHS ${HDF5_DIR} NO_DEFAULT_PATH)  
-  find_library(HDF5_lib NAMES libhdf5.a hdf5 PATHS ${HDF5_DIR})  
+  find_library(HDF5_lib NAMES libhdf5.a hdf5 PATHS ${HDF5_DIR} NO_DEFAULT_PATH)
+  find_library(HDF5_lib NAMES libhdf5.a hdf5 PATHS ${HDF5_DIR})
   find_library(HDF5_hl_lib NAMES libhdf5_hl.a hdf5_hl PATHS ${HDF5_DIR} NO_DEFAULT_PATH)
   find_library(HDF5_hl_lib NAMES libhdf5_hl.a hdf5_hl PATHS ${HDF5_DIR})
   MESSAGE(STATUS "Using NetCDF lib: ${NetCDF_lib}")
@@ -186,7 +186,7 @@ else()
   ADD_DEFINITIONS(-DUSE_FLOAT_STORAGE=1)
 endif()
 ExternalProject_Add(hypercine
-  GIT_REPOSITORY git://github.com/dicengine/hypercine.git
+  GIT_REPOSITORY https://github.com/dicengine/hypercine.git
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/hypercine
   CMAKE_ARGS ${HYPERCINE_CMAKE_ARGS}
 )
@@ -282,7 +282,7 @@ ENDIF()
 
 IF(DICE_ENABLE_OPENCV)
   SET(DICE_HEADER_DIRS
-      ${DICE_HEADER_DIRS}      
+      ${DICE_HEADER_DIRS}
       ${CMAKE_CURRENT_SOURCE_DIR}/src/opencv
   )
   add_definitions(-DDICE_ENABLE_OPENCV=1)
@@ -344,7 +344,7 @@ ENDIF(DICE_DEBUG_MSG)
 # but pick up openmp if Trilinos was compiled with it:
 if(WIN32)
   SET(CMAKE_CXX_FLAGS ${Trilinos_CXX_COMPILER_FLAGS})
-  SET(CMAKE_C_FLAGS ${Trilinos_C_COMPILER_FLAGS}) 
+  SET(CMAKE_C_FLAGS ${Trilinos_C_COMPILER_FLAGS})
 Else()
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -O3")
   STRING(FIND ${Trilinos_CXX_COMPILER_FLAGS} "openmp" OpenMPFound)
