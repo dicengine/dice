@@ -211,6 +211,24 @@ public:
     std::vector<scalar_t> & residuals,
     const bool use_ref_grads=false)=0;
 
+  /// method that computes the residuals for this shape function
+  /// \param x x-coordinate of the point to compute for
+  /// \param y y-coordinate of the point to compute for
+  /// \param cx input centroid coordinate (dummy variable for some shape functions)
+  /// \param cy input centroid coordinate (dummy variable for some shape functions)
+  /// \param gx x image gradient
+  /// \param gy y image gradient
+  /// \param high_order_terms [out] the vector to store the high_order_terms in
+  /// \param use_ref_grads true if the gradients should be used from the reference image (so they need to be adjusted for the current def map)
+  virtual void high_order_terms(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & high_order_terms,
+    const bool use_ref_grads=false)=0;
+
   /// update the parameter values based on an input vector
   /// \param update reference to the update vector
   void update(const std::vector<scalar_t> & update);
@@ -328,6 +346,16 @@ public:
     const bool use_ref_grads=false);
 
   /// see base class description
+  virtual void high_order_terms(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & high_order_terms,
+    const bool use_ref_grads=false);
+
+  /// see base class description
   virtual bool test_for_convergence(const std::vector<scalar_t> & old_parameters,
     const scalar_t & tol);
 
@@ -352,6 +380,8 @@ private:
   int nsyy_ind_ = -1;
   int ssxy_ind_ = -1;
 };
+
+
 
 /// \class DICe::Quadratic_Shape_Function
 /// \brief 12 parameter quadratic mapping for local shape function
@@ -410,6 +440,18 @@ public:
     const scalar_t & gy,
     std::vector<scalar_t> & residuals,
     const bool use_ref_grads=false);
+
+  /// see base class description
+  virtual void high_order_terms(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & high_order_terms,
+    const bool use_ref_grads=false){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  };
 
   /// see base class description
   virtual void save_fields(Schema * schema,
@@ -576,6 +618,19 @@ public:
     const scalar_t & gy,
     std::vector<scalar_t> & residuals,
     const bool use_ref_grads = false);
+
+  /// see base class description
+  virtual void high_order_terms(const scalar_t & x,
+    const scalar_t & y,
+    const scalar_t & cx,
+    const scalar_t & cy,
+    const scalar_t & gx,
+    const scalar_t & gy,
+    std::vector<scalar_t> & high_order_terms,
+    const bool use_ref_grads=false){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"not implemented yet");
+  };
+
 
   /// see base class description
   virtual void save_fields(Schema * schema,

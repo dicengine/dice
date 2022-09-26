@@ -229,7 +229,8 @@ Affine_Shape_Function::map(const scalar_t & x,
   dvdy  = has_nsyy_ ? parameters_[nsyy_ind_] : 0.0;
   gxy   = has_ssxy_ ? parameters_[ssxy_ind_] : 0.0;
   cost = cos(theta);
-  sint = sin(theta);  dx = x - cx;
+  sint = sin(theta);
+  dx = x - cx;
   dy = y - cy;
   Dx = (1.0+dudx)*dx + gxy*dy;
   Dy = (1.0+dvdy)*dy + gxy*dx;
@@ -384,6 +385,46 @@ Affine_Shape_Function::residuals(const scalar_t & x,
     residuals[nsyy_ind_] = delEy;
   if (has_ssxy_)
     residuals[ssxy_ind_] = delGxy;
+}
+
+void
+Affine_Shape_Function::high_order_terms(const scalar_t & x,
+  const scalar_t & y,
+  const scalar_t & cx,
+  const scalar_t & cy,
+  const scalar_t & gx,
+  const scalar_t & gy,
+  std::vector<scalar_t> & high_order_terms,
+  const bool use_ref_grads){
+  assert((int_t)high_order_terms.size()==4);
+
+  static scalar_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0,delTheta=0.0,delEx=0.0,delEy=0.0,delGxy=0.0;
+  static scalar_t Gx=0.0,Gy=0.0;
+  static scalar_t theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0,cosTheta=0.0,sinTheta=0.0;
+  theta = has_rotz_ ? parameters_[rotz_ind_] : 0.0;
+  dudx  = has_nsxx_ ? parameters_[nsxx_ind_] : 0.0;
+  dvdy  = has_nsyy_ ? parameters_[nsyy_ind_] : 0.0;
+  gxy   = has_ssxy_ ? parameters_[ssxy_ind_] : 0.0;
+  cosTheta = std::cos(theta);
+  sinTheta = std::sin(theta);
+
+  dx = x - cx;
+  dy = y - cy;
+  Dx = (1.0+dudx)*(dx) + gxy*(dy);
+  Dy = (1.0+dvdy)*(dy) + gxy*(dx);
+  Gx = use_ref_grads ? cosTheta*gx - sinTheta*gy : gx;
+  Gy = use_ref_grads ? sinTheta*gx + cosTheta*gy : gy;
+
+  delTheta = Gx*(-sinTheta*Dx - cosTheta*Dy) + Gy*(cosTheta*Dx - sinTheta*Dy);
+  //deldelTheta = Gx*(-cosTheta*Dx + sinTheta*Dy) + Gy*(-sinTheta*Dx - cosTheta*Dy);
+  delEx = Gx*dx*cosTheta + Gy*dx*sinTheta;
+  delEy = -Gx*dy*sinTheta + Gy*dy*cosTheta;
+  delGxy = Gx*(cosTheta*dy - sinTheta*dx) + Gy*(sinTheta*dy + cosTheta*dx);
+
+  high_order_terms[0] = Gx*(sinTheta*Dy - cosTheta*Dx) + Gy*(-1.0*sinTheta*Dx - cosTheta*Dy);
+  high_order_terms[1] = Gy*cosTheta*dx - Gx*sinTheta*dx;
+  high_order_terms[2] = -1.0*Gx*cosTheta*dy - Gy*sinTheta*dy;
+  high_order_terms[3] = Gx*(-1.0*sinTheta*dy - cosTheta*dx) + Gy*(cosTheta*dy - sinTheta*dx);
 }
 
 
