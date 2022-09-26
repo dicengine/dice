@@ -48,12 +48,14 @@
 namespace DICe{
 
 static bool string_maps_created = false;
+static bool short_string_maps_created = false;
 static std::map<field_enums::Entity_Rank,std::string> entity_rank_string;
 static std::map<std::string,field_enums::Entity_Rank> string_entity_rank;
 static std::map<field_enums::Field_Type,std::string> field_type_string;
 static std::map<std::string,field_enums::Field_Type> string_field_type;
 static std::map<field_enums::Field_Name,std::string> field_name_string;
 static std::map<std::string,field_enums::Field_Name> string_field_name;
+static std::map<field_enums::Field_Name,std::string> field_short_name_string;
 
 DICE_LIB_DLL_EXPORT
 void create_string_maps();
@@ -237,6 +239,83 @@ void create_string_maps()
   }
 }
 
+DICE_LIB_DLL_EXPORT
+void create_short_string_maps();
+DICE_LIB_DLL_EXPORT
+void create_short_string_maps()
+{
+  if (short_string_maps_created)
+  {
+    return;
+  }
+  short_string_maps_created = true;
+
+  field_short_name_string[field_enums::NO_SUCH_FIELD_NAME]                                 = "nsf";
+  field_short_name_string[field_enums::BLOCK_ID]                                           = "blk";
+  field_short_name_string[field_enums::PROCESSOR_ID]                                       = "proc";
+  field_short_name_string[field_enums::MASTER_NODE_ID]                                     = "mnid";
+  field_short_name_string[field_enums::INITIAL_COORDINATES]                                = "xyz";
+  field_short_name_string[field_enums::CROSS_CORR_Q]                                       = "x-q";
+  field_short_name_string[field_enums::CROSS_CORR_R]                                       = "x-r";
+  field_short_name_string[field_enums::SUBSET_COORDINATES_X]                               = "x";
+  field_short_name_string[field_enums::SUBSET_COORDINATES_Y]                               = "y";
+  field_short_name_string[field_enums::STEREO_COORDINATES_X]                               = "s-x";
+  field_short_name_string[field_enums::STEREO_COORDINATES_Y]                               = "s-y";
+  field_short_name_string[field_enums::MODEL_COORDINATES_X]                                = "m-x";
+  field_short_name_string[field_enums::MODEL_COORDINATES_Y]                                = "m-y";
+  field_short_name_string[field_enums::MODEL_COORDINATES_Z]                                = "m-z";
+  field_short_name_string[field_enums::INITIAL_CELL_COORDINATES]                           = "c-xyz";
+  field_short_name_string[field_enums::INITIAL_CELL_SIZE]                                  = "cs";
+  field_short_name_string[field_enums::INITIAL_SUBELEMENT_SIZE]                            = "iss";
+  field_short_name_string[field_enums::INITIAL_WEIGHTED_CELL_SIZE]                         = "iwcs";
+  field_short_name_string[field_enums::INITIAL_CELL_RADIUS]                                = "cr";
+  field_short_name_string[field_enums::DISPLACEMENT]                                       = "uvw";
+  field_short_name_string[field_enums::PROJECTION_AUG_X]                                   = "pa-x";
+  field_short_name_string[field_enums::PROJECTION_AUG_Y]                                   = "pa-y";
+  field_short_name_string[field_enums::SUBSET_DISPLACEMENT_X]                              = "u";
+  field_short_name_string[field_enums::SUBSET_DISPLACEMENT_Y]                              = "v";
+  field_short_name_string[field_enums::STEREO_DISPLACEMENT_X]                              = "s-u";
+  field_short_name_string[field_enums::STEREO_DISPLACEMENT_Y]                              = "s-y";
+  field_short_name_string[field_enums::MODEL_DISPLACEMENT_X]                               = "m-u";
+  field_short_name_string[field_enums::MODEL_DISPLACEMENT_Y]                               = "m-v";
+  field_short_name_string[field_enums::MODEL_DISPLACEMENT_Z]                               = "m-w";
+  field_short_name_string[field_enums::ROTATION_Z]                                         = "theta";
+  field_short_name_string[field_enums::SIGMA]                                              = "sigma";
+  field_short_name_string[field_enums::GAMMA]                                              = "gamma";
+  field_short_name_string[field_enums::BETA]                                               = "beta";
+  field_short_name_string[field_enums::OMEGA]                                              = "omega";
+  field_short_name_string[field_enums::NOISE_LEVEL]                                        = "noise";
+  field_short_name_string[field_enums::CONTRAST_LEVEL]                                     = "contrast";
+  field_short_name_string[field_enums::ACTIVE_PIXELS]                                      = "ac-pxls";
+  field_short_name_string[field_enums::MATCH]                                              = "match";
+  field_short_name_string[field_enums::ITERATIONS]                                         = "it";
+  field_short_name_string[field_enums::STATUS_FLAG]                                        = "flag";
+  field_short_name_string[field_enums::NEIGHBOR_ID]                                        = "neigh-id";
+  field_short_name_string[field_enums::CONDITION_NUMBER]                                   = "cond";
+  field_short_name_string[field_enums::SHEAR_STRETCH_XY]                                   = "g-xy";
+  field_short_name_string[field_enums::NORMAL_STRETCH_XX]                                  = "e-x";
+  field_short_name_string[field_enums::NORMAL_STRETCH_YY]                                  = "e-y";
+  field_short_name_string[field_enums::LAGRANGE_MULTIPLIER]                                = "lm";
+  field_short_name_string[field_enums::RESIDUAL]                                           = "resid";
+  field_short_name_string[field_enums::GLOBAL_GRAY_DIFF]                                   = "del-gray";
+  field_short_name_string[field_enums::LHS]                                                = "lhs";
+  field_short_name_string[field_enums::MIXED_RESIDUAL]                                     = "m-resid";
+  field_short_name_string[field_enums::MIXED_LHS]                                          = "m-lhs";
+  field_short_name_string[field_enums::EXACT_SOL_VECTOR]                                   = "exact-sol";
+  field_short_name_string[field_enums::EXACT_LAGRANGE_MULTIPLIER]                          = "exact-lm";
+  field_short_name_string[field_enums::IMAGE_PHI]                                          = "phi";
+  field_short_name_string[field_enums::IMAGE_GRAD_PHI]                                     = "g-phi";
+}
+
+DICE_LIB_DLL_EXPORT
+std::string tostring_short(const field_enums::Field_Name & field_name){
+  create_short_string_maps();
+  std::map<field_enums::Field_Name,std::string>::iterator pos=field_short_name_string.find(field_name);
+  if(field_short_name_string.count(field_name)==0){
+    return "-";
+  }
+  return pos->second;
+}
 DICE_LIB_DLL_EXPORT
 std::string tostring(const field_enums::Field_Type & field_type){
   create_string_maps();

@@ -244,6 +244,10 @@ Field_State
   STATE_N_PLUS_ONE
 };
 }  //field enums
+/// converts a field name to short string
+/// \param field_name the field type
+DICE_LIB_DLL_EXPORT
+std::string tostring_short(const field_enums::Field_Name & field_name);
 /// converts a field type to string
 /// \param field_type the field type
 DICE_LIB_DLL_EXPORT
