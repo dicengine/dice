@@ -331,6 +331,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
   Teuchos::SerialDenseMatrix<int_t,double> H(N,N, true);
   Teuchos::ArrayRCP<double> q(N,0.0);
   std::vector<scalar_t> residuals(N,0.0);
+  //std::vector<scalar_t> high_order_terms(4,0.0);
   std::vector<scalar_t> def_old(N,0.0);    // save off the previous value to test for convergence
   std::vector<scalar_t> def_update(N,0.0); // save off the previous value to test for convergence
 
@@ -340,17 +341,34 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
   Teuchos::ArrayRCP<scalar_t> gradGy = subset_->grad_y_array();
   const scalar_t cx = subset_->centroid_x();
   const scalar_t cy = subset_->centroid_y();
+  //scalar_t denomF = 0.0;
+  //const scalar_t meanF = subset_->mean(REF_INTENSITIES,denomF);
   const scalar_t meanF = subset_->mean(REF_INTENSITIES);
 
-  scalar_t old_u=0.0,old_v=0.0,old_t=0.0;
-  shape_function->map_to_u_v_theta(cx,cy,old_u,old_v,old_t);
-  DEBUG_MSG(std::setw(5) << "Iter" <<
-    std::setw(12) << " u"  <<
-    std::setw(12) << " du" <<
-    std::setw(12) << " v"  <<
-    std::setw(12) << " dv" <<
-    std::setw(12) << " t"  <<
-    std::setw(12) << " dt");
+#ifdef DICE_DEBUG_MSG
+  std::vector<std::string> field_short_names(N,"");
+  // field short names may not be in order of the shape function parameters so reorder here
+  std::map<Field_Spec,size_t>::const_iterator it = shape_function->spec_map()->begin();
+  const std::map<Field_Spec,size_t>::const_iterator it_end = shape_function->spec_map()->end();
+  for(;it!=it_end;++it){
+    assert(it->second < (unsigned long)N);
+    field_short_names[it->second] = tostring_short(it->first.get_name());
+  }
+  std::stringstream iteration_header;
+  iteration_header << std::setw(5) << "it" <<
+      std::setw(12) << "||grad||";
+  for(int_t r=0;r<N;++r){
+    std::string del_str = "del-" + field_short_names[r];
+    iteration_header << std::setw(12) << field_short_names[r];
+    iteration_header << std::setw(12) << del_str;
+  }
+  DEBUG_MSG(iteration_header.str());
+#endif
+
+  // uncomment to write image of reference subset for each subset
+  //std::stringstream ssr;
+  //ssr << "subset_" << subset_->centroid_x() << "_" << subset_->centroid_y() << "_ref.png";
+  //subset_->write_image(ssr.str(),false);
 
   int_t solve_it = 0;
   for(;solve_it<=max_solve_its;++solve_it){
@@ -359,11 +377,6 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
     // update the deformed image with the new deformation:
     try{
       subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,shape_function,schema_->interpolation_method());
-      //#ifdef DICE_DEBUG_MSG
-      //    std::stringstream fileName;
-      //    fileName << "defSubset_" << correlation_point_global_id_ << "_" << solve_it;
-      //    def_subset_->write(fileName.str());
-      //#endif
     }
     catch (...) {
       // clean up storage for lapack:
@@ -372,7 +385,14 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
       return SUBSET_CONSTRUCTION_FAILED;
     }
 
+    // uncomment to write image of deformed subset for each subset at each iteration
+    //std::stringstream ss;
+    //ss << "subset_" << subset_->centroid_x() << "_" << subset_->centroid_y() << "_" << solve_it << ".png";
+    //subset_->write_image(ss.str(),true);
+
     // compute the mean value of the subsets:
+    //scalar_t denomG = 0.0;
+    //const scalar_t meanG = subset_->mean(DEF_INTENSITIES,denomG);
     const scalar_t meanG = subset_->mean(DEF_INTENSITIES);
     // the gradients are taken from the def images rather than the ref
     const bool use_ref_grads = schema_->def_img()->has_gradients() ? false : true;
@@ -381,14 +401,26 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
     for(int_t index=0;index<subset_->num_pixels();++index){
       if(subset_->is_deactivated_this_step(index)||!subset_->is_active(index)) continue;
       GmF = (subset_->def_intensities(index) - meanG) - (subset_->ref_intensities(index) - meanF);
+      //GmF = (subset_->def_intensities(index) - meanG)/denomG - (subset_->ref_intensities(index) - meanF)/denomF;
       for(int_t i=0;i<N;++i)
         residuals[i] = 0.0;
+      //for(int_t i=0;i<4;++i)
+      //  high_order_terms[i] = 0.0;
       shape_function->residuals(subset_->x(index),subset_->y(index),cx,cy,gradGx[index],gradGy[index],residuals,use_ref_grads);
+      //shape_function->high_order_terms(subset_->x(index),subset_->y(index),cx,cy,gradGx[index],gradGy[index],high_order_terms,use_ref_grads);
       for(int_t i=0;i<N;++i){
         q[i] += GmF*residuals[i];
         for(int_t j=0;j<N;++j)
           H(i,j) += residuals[i]*residuals[j];
       }
+      // TODO needs test on the size of H (which shape functions are active?)
+      //H(2,2) += GmF * high_order_terms[0];
+      //H(2,3) += GmF * high_order_terms[1];
+      //H(2,4) += GmF * high_order_terms[2];
+      //H(2,5) += GmF * high_order_terms[3];
+      //H(3,2) += GmF * high_order_terms[1];
+      //H(4,2) += GmF * high_order_terms[2];
+      //H(5,2) += GmF * high_order_terms[3];
     }
 
     if(schema_->use_objective_regularization()){ // TODO test for affine shape functions too
@@ -453,19 +485,21 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
         def_update[i] += H(i,j)*(-1.0)*q[j];
     shape_function->update(def_update);
 
-    scalar_t guess_u = 0.0,guess_v=0.0,guess_t=0.0;
-    shape_function->map_to_u_v_theta(cx,cy,guess_u,guess_v,guess_t);
+#ifdef DICE_DEBUG_MSG
+    scalar_t grad_r = 0.0;
+    for(int_t r=0;r<N;++r)
+      grad_r += q[r]*q[r];
+    grad_r = std::sqrt(grad_r);
     std::ios  state(NULL);
     state.copyfmt(std::cout);
-    DEBUG_MSG(std::setw(5) << solve_it <<
-      std::setw(12) << std::scientific << std::setprecision(4) << guess_u <<
-      std::setw(12) << guess_u - old_u <<
-      std::setw(12) << guess_v <<
-      std::setw(12) << guess_v - old_v <<
-      std::setw(12) << guess_t <<
-      std::setw(12) << guess_t - old_t);
+    std::stringstream iteration_info;
+    iteration_info << std::setw(5) << solve_it <<
+        std::setw(12) << std::scientific << std::setprecision(4) << grad_r;
+    for(int_t r=0;r<N;++r)
+      iteration_info << std::setw(12) << def_old[r] << std::setw(12) << def_update[r];
+    DEBUG_MSG(iteration_info.str());
     std::cout.copyfmt(state);
-    shape_function->map_to_u_v_theta(cx,cy,old_u,old_v,old_t);
+#endif
 
     const bool converged = shape_function->test_for_convergence(def_old,tolerance);
     if(converged){
