@@ -138,7 +138,8 @@ void match_features(Teuchos::RCP<Image> left_image,
   // draw results image if requested
   if(result_image_name!=""){
     cv::Mat res;
-    cv::drawMatches(img1, inliers1, img2, inliers2, good_matches, res);
+    cv::drawKeypoints(img1,inliers1,res);
+    //cv::drawMatches(img1, inliers1, img2, inliers2, good_matches, res);
     cv::imwrite(result_image_name.c_str(), res);
   }
 
