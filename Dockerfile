@@ -50,15 +50,20 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get install -y libblas-dev liblapack-dev libopenmpi-dev libtiff-dev libpng-dev libjpeg-dev libnetcdf-dev
 
 #Copy DICe code
-RUN mkdir dice-2.0
-COPY . /dice-2.0/
+RUN mkdir /dice-2.0
+COPY src /dice-2.0/src
+COPY tests /dice-2.0/tests
+COPY tools /dice-2.0/tools
+COPY scripts /dice-2.0/scripts
+COPY CMakeLists.txt /dice-2.0/CMakeLists.txt 
+
 
 #Update netcdf.h to a version with values as per dice build instructions
 RUN cd /usr/include && rm netcdf.h && cp /dice-2.0/scripts/ubuntu/docker/netcdf.h .
 
 #Install trilinos
 RUN git clone https://github.com/trilinos/Trilinos.git --branch trilinos-release-12-4-2 trilinos-12.4.2
-RUN cd trilinos-12.4.2 && mkdir build && cd build &&  cp /dice-2.0/scripts/ubuntu/docker/do-trilinos-cmake-docker . && chmod +x do-trilinos-cmake-docker && ./do-trilinos-cmake-docker && make all install
+RUN cd /trilinos-12.4.2 && mkdir build && cd build &&  cp /dice-2.0/scripts/ubuntu/docker/do-trilinos-cmake-docker . && chmod +x do-trilinos-cmake-docker && ./do-trilinos-cmake-docker && make all install
 
 #Install openCV
 RUN wget https://github.com/opencv/opencv/archive/3.2.0.zip -O OpenCV320.zip
@@ -66,8 +71,17 @@ RUN unzip OpenCV320.zip && rm OpenCV320.zip
 RUN cd opencv-3.2.0 && mkdir build && cd build && cp /dice-2.0/scripts/ubuntu/docker/do-opencv-cmake-docker . && chmod +x do-opencv-cmake-docker && ./do-opencv-cmake-docker && make all install
 
 #Install DICE
-RUN cd dice-2.0 && mkdir build && cd build && cp /dice-2.0/scripts/ubuntu/docker/do-dice-cmake-docker . && chmod +x do-dice-cmake-docker && ./do-dice-cmake-docker && make all && cd tests  && ctest; exit 0
+RUN cd /dice-2.0 && mkdir build && cd build && cp /dice-2.0/scripts/ubuntu/docker/do-dice-cmake-docker . && chmod +x do-dice-cmake-docker && ./do-dice-cmake-docker && make all
 
-## Fails test number 44
+#Remove to shrink image
+RUN rm -r /trilinos-12.4.2-Source && rm -r /trilinos-12.4.2 && rm -r /dice-2.0/tests
 
+#Run Tests
+RUN cd /dice-2.0/build/tests && ctest; exit 0
+## Fails test number 44, hence exit 0
+
+#Remove test folder to shrink image
+RUN rm -r /dice-2.0/build/tests 
+
+WORKDIR /home
 CMD ["/dice-2.0/build/bin/dice"]
