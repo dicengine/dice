@@ -305,6 +305,18 @@ void create_short_string_maps()
   field_short_name_string[field_enums::EXACT_LAGRANGE_MULTIPLIER]                          = "exact-lm";
   field_short_name_string[field_enums::IMAGE_PHI]                                          = "phi";
   field_short_name_string[field_enums::IMAGE_GRAD_PHI]                                     = "g-phi";
+  field_short_name_string[field_enums::QUAD_A]                                             = "a";
+  field_short_name_string[field_enums::QUAD_B]                                             = "b";
+  field_short_name_string[field_enums::QUAD_C]                                             = "c";
+  field_short_name_string[field_enums::QUAD_D]                                             = "d";
+  field_short_name_string[field_enums::QUAD_E]                                             = "e";
+  field_short_name_string[field_enums::QUAD_F]                                             = "f";
+  field_short_name_string[field_enums::QUAD_G]                                             = "g";
+  field_short_name_string[field_enums::QUAD_H]                                             = "h";
+  field_short_name_string[field_enums::QUAD_I]                                             = "i";
+  field_short_name_string[field_enums::QUAD_J]                                             = "j";
+  field_short_name_string[field_enums::QUAD_K]                                             = "k";
+  field_short_name_string[field_enums::QUAD_L]                                             = "l";
 }
 
 DICE_LIB_DLL_EXPORT
