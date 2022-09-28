@@ -333,6 +333,7 @@ DICE_LIB_DLL_EXPORT void tracking_default_params(Teuchos::ParameterList *  defau
   defaultParams->set(DICe::obstruction_skin_factor,1.8);
   defaultParams->set(DICe::normalize_gamma_with_active_pixels,false);
   defaultParams->set(DICe::levenberg_marquardt_regularization_factor,-1.0);
+  defaultParams->set(DICe::momentum_factor,0.0);
   defaultParams->set(DICe::pixel_integration_order,1);
   defaultParams->set(DICe::skip_solve_gamma_threshold,1.0E-10);
   defaultParams->set(DICe::skip_all_solves,false);
@@ -395,6 +396,7 @@ DICE_LIB_DLL_EXPORT void dice_default_params(Teuchos::ParameterList *  defaultPa
   defaultParams->set(DICe::obstruction_skin_factor,1.0);
   defaultParams->set(DICe::normalize_gamma_with_active_pixels,false);
   defaultParams->set(DICe::levenberg_marquardt_regularization_factor,-1.0);
+  defaultParams->set(DICe::momentum_factor,0.0);
   defaultParams->set(DICe::pixel_integration_order,1);
   defaultParams->set(DICe::skip_solve_gamma_threshold,1.0E-10);
   defaultParams->set(DICe::skip_all_solves,false);

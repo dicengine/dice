@@ -716,6 +716,8 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
   obstruction_skin_factor_ = diceParams->get<double>(DICe::obstruction_skin_factor);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::levenberg_marquardt_regularization_factor),std::runtime_error,"");
   levenberg_marquardt_regularization_factor_ = diceParams->get<double>(DICe::levenberg_marquardt_regularization_factor);
+  TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::momentum_factor),std::runtime_error,"");
+  momentum_factor_ = diceParams->get<double>(DICe::momentum_factor);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::output_beta),std::runtime_error,"");
   output_beta_ = diceParams->get<bool>(DICe::output_beta);
   TEUCHOS_TEST_FOR_EXCEPTION(!diceParams->isParameter(DICe::write_exodus_output),std::runtime_error,"");

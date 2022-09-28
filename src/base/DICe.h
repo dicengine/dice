@@ -282,6 +282,8 @@ const char* const normalize_gamma_with_active_pixels = "normalize_gamma_with_act
 /// String parameter name
 const char* const levenberg_marquardt_regularization_factor = "levenberg_marquardt_regularization_factor";
 /// String parameter name
+const char* const momentum_factor = "momentum_factor";
+/// String parameter name
 const char* const pixel_integration_order = "pixel_integration_order";
 /// String parameter name
 const char* const rotate_ref_image_90 = "rotate_ref_image_90";
@@ -1071,6 +1073,11 @@ const Correlation_Parameter levenberg_marquardt_regularization_factor_param(leve
   true,
   "The coefficient applied to the regularization term if active");
 /// Correlation parameter and properties
+const Correlation_Parameter momentum_factor_param(momentum_factor,
+  SCALAR_PARAM,
+  true,
+  "The coefficient applied to use momentum in steepest descent");
+/// Correlation parameter and properties
 const Correlation_Parameter max_evolution_iterations_param(max_evolution_iterations,SIZE_PARAM,true,
   "Maximum evolution iterations to use (only valid for subset_evolution_routine)");
 /// Correlation parameter and properties
@@ -1293,7 +1300,7 @@ const Correlation_Parameter remove_outlier_pixels_param(remove_outlier_pixels,
 // TODO don't forget to update this when adding a new one
 /// The total number of valid correlation parameters
 /// Vector of valid parameter names
-const int_t num_valid_correlation_params = 91;
+const int_t num_valid_correlation_params = 92;
 /// Vector oIf valid parameter names
 const Correlation_Parameter valid_correlation_params[num_valid_correlation_params] = {
   correlation_routine_param,
@@ -1371,6 +1378,7 @@ const Correlation_Parameter valid_correlation_params[num_valid_correlation_param
   rotate_ref_image_270_param,
   rotate_def_image_270_param,
   levenberg_marquardt_regularization_factor_param,
+  momentum_factor_param,
   filter_failed_cine_pixels_param,
   convert_cine_to_8_bit_param,
   remove_outlier_pixels_param,

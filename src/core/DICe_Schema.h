@@ -760,6 +760,11 @@ public:
     return levenberg_marquardt_regularization_factor_ > 0.0;
   }
 
+  /// Returns true if momentum should be used in the objective evaluation
+  bool use_momentum()const{
+    return momentum_factor_ != 0.0;
+  }
+
   /// returns true if the incremental formulation is used
   bool use_incremental_formulation()const{
     return use_incremental_formulation_;
@@ -906,6 +911,11 @@ public:
   /// Returns the factor to use for regularization
   double levenberg_marquardt_regularization_factor()const{
     return levenberg_marquardt_regularization_factor_;
+  }
+
+  /// Returns the factor to use for regularization
+  double momentum_factor()const{
+    return momentum_factor_;
   }
 
   /// Returns the integration order for each pixel
@@ -1244,6 +1254,8 @@ private:
   bool normalize_gamma_with_active_pixels_;
   /// regularization factor
   double levenberg_marquardt_regularization_factor_;
+  /// regularization factor
+  double momentum_factor_;
   /// Solution vector and subsets are initialized
   bool is_initialized_;
   /// Pointer to the parameters whith which this schema was initialized

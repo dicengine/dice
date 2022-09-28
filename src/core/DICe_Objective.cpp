@@ -374,6 +374,7 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
   //std::vector<scalar_t> high_order_terms(4,0.0);
   std::vector<scalar_t> def_old(N,0.0);    // save off the previous value to test for convergence
   std::vector<scalar_t> def_update(N,0.0); // save off the previous value to test for convergence
+  std::vector<scalar_t> def_update_old(N,0.0);
 
   // note this creates a pointer to the array so
   // the values are updated each frame if compute_grad_def_images is on
@@ -523,6 +524,15 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
     for(int_t i=0;i<N;++i)
       for(int_t j=0;j<N;++j)
         def_update[i] += H(i,j)*(-1.0)*q[j];
+
+    if(schema_->use_momentum()){
+      const scalar_t momentum = schema_->momentum_factor();
+      for(int_t i=0;i<N;++i){
+        def_update[i] += momentum*def_update_old[i];
+        def_update_old[i] = def_update[i];
+      }
+    }
+
     shape_function->update(def_update);
 
 #ifdef DICE_DEBUG_MSG
