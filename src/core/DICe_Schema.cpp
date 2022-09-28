@@ -2959,6 +2959,614 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     DEBUG_MSG("Schema::initialize_cross_correlation(): right file " << right_image_string);
   }
 
+  if(cross_initialization_method_==USE_RECTIFIED_CORRESPONDENCES){
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Not completely implemented yet");
+	  DEBUG_MSG("Schema::initialize_cross_correlation(): using correspondences from rectified images to initialize");
+
+	  // create rectified images and store them in the .dice folder
+	  cv::Mat left_img = cv::imread(left_image_string, cv::ImreadModes::IMREAD_GRAYSCALE);
+	  cv::Mat right_img = cv::imread(right_image_string, cv::ImreadModes::IMREAD_GRAYSCALE);
+	  cv::Mat M1 = tri->camera_matrix(0);
+	  cv::Mat M2 = tri->camera_matrix(1);
+	  cv::Mat D1 = tri->distortion_matrix(0);
+	  cv::Mat D2 = tri->distortion_matrix(1);
+	  cv::Mat R  = tri->rotation_matrix();
+	  cv::Mat T  = tri->translation_matrix();
+	  cv::Mat R1, R2, P1, P2, map11, map12, map21, map22;
+	  cv::stereoRectify(M1, D1, M2, D2, left_img.size(), R, T, R1, R2, P1, P2, cv::noArray(), 0);
+	  cv::initUndistortRectifyMap(M1, D1, R1, P1, left_img.size(),  CV_16SC2, map11, map12);
+	  cv::initUndistortRectifyMap(M2, D2, R2, P2, right_img.size(), CV_16SC2, map21, map22);
+	  cv::Mat left_img_rmp, right_img_rmp;
+	  cv::remap(left_img, left_img_rmp, map11, map12, cv::INTER_LINEAR);
+	  cv::remap(right_img, right_img_rmp, map21, map22, cv::INTER_LINEAR);
+
+    create_directory(".dice");
+
+	  // downsample the rectified image
+//    cv::Mat pyr_left_1, pyr_left_2, pyr_left_3, pyr_left_4;
+//    cv::pyrDown(left_img_rmp,pyr_left_1);
+//    cv::Mat pyr_right_1;
+//    cv::pyrDown(right_img_rmp,pyr_right_1);
+//    cv::imwrite(".dice/pyr_1.png",pyr_left_1);
+//    cv::pyrDown(pyr_left_1,pyr_left_2);
+//    cv::imwrite(".dice/pyr_2.png",pyr_left_2);
+//    cv::pyrDown(pyr_left_2,pyr_left_3);
+//    cv::imwrite(".dice/pyr_3.png",pyr_left_3);
+//    cv::pyrDown(pyr_left_3,pyr_left_4);
+//    cv::imwrite(".dice/pyr_4.png",pyr_left_4);
+
+	  std::string outname_left = ".dice/left_rectified.png";
+	  std::string outname_right = ".dice/right_rectified.png";
+
+    cv::imwrite(outname_left,left_img_rmp);
+    cv::imwrite(outname_right,right_img_rmp);
+//    cv::imwrite(outname_left,pyr_left_1);
+//    cv::imwrite(outname_right,pyr_right_1);
+
+    // update the left and right images for stereo cross-correlation
+    set_ref_image(outname_left);
+    set_def_image(outname_right);
+
+
+	  // do a feature matching on the rectified images
+
+    float feature_epi_dist_tol = 0.5f;
+    float epi_dist_tol = 0.5f;
+    if(tri->avg_epipolar_error()!=0.0){
+      feature_epi_dist_tol = 3.0*tri->avg_epipolar_error();
+      epi_dist_tol = 3.0*tri->avg_epipolar_error();
+    }
+    DEBUG_MSG("Schema::initialize_cross_correlation(): feature epi dist tol: " << feature_epi_dist_tol);
+    DEBUG_MSG("Schema::initialize_cross_correlation(): epi dist tol: " << epi_dist_tol);
+    Teuchos::RCP<DICe::Image> left_image = Teuchos::rcp(new Image(outname_left.c_str(),imgParams));
+    Teuchos::RCP<DICe::Image> right_image = Teuchos::rcp(new Image(outname_right.c_str(),imgParams));
+
+    // TODO consolidate this block of code (as a function call?):--------------------
+
+    DEBUG_MSG("Schema::initialize_cross_correlation(): begin matching features on processor 0");
+    float feature_tol = 0.005f;
+    std::vector<scalar_t> left_x, right_x, left_y, right_y;
+    std::vector<scalar_t> good_left_x, good_right_x, good_left_y, good_right_y, good_u;
+    match_features(left_image,right_image,left_x,left_y,right_x,right_y,feature_tol,".dice/fm_rectified_corr_0p005.png");
+    if(left_x.size() < 10){
+      DEBUG_MSG("Schema::initialize_cross_correlation(): initial attempt failed with tol = 0.005f, setting to 0.001f and trying again.");
+      feature_tol = 0.001f;
+      match_features(left_image,right_image,left_x,left_y,right_x,right_y,feature_tol,".dice/fm_rectified_corr_0p001.png");
+      if(left_x.size()<10){
+        DEBUG_MSG("Schema::initialize_cross_correlation(): initial attempt failed with tol = 0.001f, equalizing histogram and trying again.");
+        match_features(left_image,right_image,left_x,left_y,right_x,right_y,feature_tol,".dice/fm_rectified_corr_0p001_eq.png",7);
+      }
+    }
+    if(left_x.size()<1){
+      std::cout << "Schema::initialize_cross_correlation(): error: feature matching failed" << std::endl;
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+    }
+    DEBUG_MSG("Schema::initialize_cross_correlation(): matching features complete");
+    // Weed out any matched features that aren't on the epipolar line
+    good_left_x.reserve(left_x.size());
+    good_left_y.reserve(left_x.size());
+    good_right_x.reserve(left_x.size());
+    good_right_y.reserve(left_x.size());
+    good_u.reserve(left_x.size());
+    for(size_t i=0;i<left_x.size();++i){
+      // epipolar lines should be straight so any slanted pairs are bad ones, only need to check y diff
+      const float dist_sq = (right_y[i] - left_y[i])*(right_y[i] - left_y[i]);
+      DEBUG_MSG("fm point " << i << " xl (" << left_x[i] << ") yl (" << left_y[i] << ") xr (" << right_x[i] << ") yr (" << right_y[i] << ") dist from epiline " << std::sqrt(dist_sq));
+      if(dist_sq<feature_epi_dist_tol){
+        good_left_x.push_back(left_x[i]);
+        good_left_y.push_back(left_y[i]);
+        good_right_x.push_back(right_x[i]);
+        good_right_y.push_back(right_y[i]);
+        good_u.push_back(right_x[i] - left_x[i]);
+      }
+    }
+    DEBUG_MSG("Schema::initialize_cross_correlation(): num good matches: " << good_left_x.size());
+    if(good_left_x.size()<1){
+      std::cout << "Schema::initialize_cross_correlation(): error: feature matching failed (not enough matches)" << std::endl;
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"");
+    }
+
+    // set up a point cloud
+    DEBUG_MSG("creating the point cloud using nanoflann");
+    Point_Cloud_2D<scalar_t> point_cloud;//_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
+    point_cloud.pts.resize(good_left_x.size());
+    for(size_t i=0;i<good_left_x.size();++i){
+      point_cloud.pts[i].x = good_left_x[i];
+      point_cloud.pts[i].y = good_left_y[i];
+    }
+    const int_t N = 3;
+    int *IPIV = new int[N+1];
+    int LWORK = N*N;
+    int INFO = 0;
+    double *WORK = new double[LWORK];
+    double *GWORK = new double[10*N];
+    int *IWORK = new int[LWORK];
+    // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
+    Teuchos::LAPACK<int,double> lapack;
+    //std::vector<std::pair<size_t,scalar_t> > ret_matches;
+    const int_t num_neigh = 7;
+    nanoflann::SearchParams params;
+    params.sorted = true; // sort by distance in ascending order
+    //TEUCHOS_TEST_FOR_EXCEPTION(step_size_x_<=0.0,std::runtime_error,"");
+    //const double neigh_rad_sq = (step_size_x_*2)*(step_size_x_*2);
+    scalar_t query_pt[2];
+    std::vector<size_t> ret_index(num_neigh);
+    std::vector<scalar_t> out_dist_sqr(num_neigh);
+
+
+    // create a schema for the course grid that will be used to initialize the subsets
+    Teuchos::RCP<Teuchos::ParameterList> schema_params = rcp(new Teuchos::ParameterList());
+    schema_params->set(DICe::compute_def_gradients,true);
+    //schema_params->set(DICe::optimization_method,SIMPLEX);
+    //schema_params->set(DICe::max_solver_iterations_fast,15);
+    const scalar_t sssig_threshold = 150.0; // fixed for now, could add to input
+    const int_t step_size = 31;
+    const int_t subset_size = 31;
+    const scalar_t v_tol = 5.0; // if the y displacement is greater than 5 it violates the epipolar constraint so it can't be a good match
+    Teuchos::RCP<DICe::Schema> rect_schema = Teuchos::rcp(new DICe::Schema(left_image->width(),left_image->height(),step_size,step_size,subset_size,schema_params));
+    rect_schema->set_ref_image(outname_left);
+    rect_schema->set_def_image(outname_right);
+    // use sigma to track which subsets successfully correlated
+    rect_schema->mesh()->get_field(SIGMA_FS)->put_scalar(0.0);
+
+    // do a check of the sssig level for each subset
+
+    TEUCHOS_TEST_FOR_EXCEPTION(!rect_schema->ref_img()->has_gradients(),std::runtime_error,
+      "Error, testing valid points for SSSIG tol, but image gradients have not been computed");
+    for(int_t local_id=0;local_id<rect_schema->local_num_subsets();++local_id){
+      const int_t cx = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS);
+      const int_t cy = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
+      scalar_t SSSIG = 0.0;
+      const int_t left_x = cx - subset_size/2;
+      const int_t right_x = left_x + subset_size;
+      const int_t top_y = cy - subset_size/2;
+      const int_t bottom_y = top_y + subset_size;
+      for(int_t y=top_y;y<bottom_y;++y){
+        for(int_t x=left_x;x<right_x;++x){
+          SSSIG += rect_schema->ref_img()->grad_x(x,y)*rect_schema->ref_img()->grad_x(x,y) +
+              rect_schema->ref_img()->grad_y(x,y)*rect_schema->ref_img()->grad_y(x,y);
+        }
+      }
+      SSSIG /= subset_size==0.0?1.0:(subset_size*subset_size);
+      rect_schema->local_field_value(local_id,OMEGA_FS) = SSSIG; // borrowing omega since there isn't an sssig field
+      if(SSSIG < sssig_threshold){
+        rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+        cv::Point pt1(cx,cy);
+        cv::circle(left_img_rmp, pt1, 10, cv::Scalar(100),3);
+      }
+    } // end subset check loop
+
+
+    const int_t num_loops = 10;  // TODO TODO TODO remove this loop?
+
+    for(int_t loop=0;loop<num_loops; ++loop){
+
+      DEBUG_MSG("building the kd-tree");
+      Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2, point_cloud, nanoflann::KDTreeSingleIndexAdaptorParams(10)));
+      kd_tree->buildIndex();
+      DEBUG_MSG("kd-tree completed");
+
+      for(int_t local_id=0;local_id<rect_schema->local_num_subsets();++local_id){
+
+        if(rect_schema->local_field_value(local_id,OMEGA_FS) < sssig_threshold) continue; // not enough gradient information
+        if(rect_schema->local_field_value(local_id,SIGMA_FS) > 0.0) continue; // positive sigma means it converged in a previous step
+//        cv::Point pt1(query_pt[0],query_pt[1]);
+//        cv::circle(left_img_rmp, pt1, 10, cv::Scalar(0),3);
+
+        query_pt[0] = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS);
+        query_pt[1] = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
+        kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+        Teuchos::SerialDenseMatrix<int_t,double> X_t(N,num_neigh, true);
+        Teuchos::SerialDenseMatrix<int_t,double> X_t_X(N,N,true);
+        for(int_t i=0;i<num_neigh;++i){
+          X_t(0,i) = 1.0;
+          X_t(1,i) = point_cloud.pts[ret_index[i]].x - query_pt[0];
+          X_t(2,i) = point_cloud.pts[ret_index[i]].y - query_pt[1];
+        }
+        // set up X^T*X
+        for(int_t k=0;k<N;++k){
+          for(int_t m=0;m<N;++m){
+            for(int_t j=0;j<num_neigh;++j){
+              X_t_X(k,m) += X_t(k,j)*X_t(m,j);
+            }
+          }
+        }
+        lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
+        lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
+
+        Teuchos::ArrayRCP<double> u(num_neigh,0.0);
+        for(int_t j=0;j<num_neigh;++j){
+          u[j] = good_u[ret_index[j]];
+        }
+        // compute X^T*u
+        Teuchos::ArrayRCP<double> X_t_u(N,0.0);
+        for(int_t k=0;k<N;++k)
+          for(int_t j=0;j<num_neigh;++j)
+            X_t_u[k] += X_t(k,j)*u[j];
+
+        // compute the coeffs
+        Teuchos::ArrayRCP<double> coeffs(N,0.0);
+        for(int_t k=0;k<N;++k)
+          for(int_t j=0;j<N;++j)
+            coeffs[k] += X_t_X(k,j)*X_t_u[j];
+
+        const float init_u = coeffs[0];
+
+        std::cout << " initial guess for subset " << local_id << " at "  << query_pt[0] <<  " " << query_pt[1] << " is " << init_u << std::endl;
+        Teuchos::RCP<Local_Shape_Function> shape_function = Teuchos::rcp(new Affine_Shape_Function(true,true,true));
+        shape_function->insert_motion(init_u,0.0);
+        Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(rect_schema.get(),rect_schema->subset_global_id(local_id)));
+        int_t num_iterations = -1;
+        Status_Flag corr_status = obj->computeUpdateFast(shape_function,num_iterations);
+        //Status_Flag corr_status = obj->computeUpdateRobust(shape_function,num_iterations);
+
+        // check the sigma values and status flag
+        scalar_t noise_std_dev = 0.0;
+        const scalar_t cross_sigma = obj->sigma(shape_function,noise_std_dev);
+        rect_schema->local_field_value(local_id,SIGMA_FS) = cross_sigma;
+        if(cross_sigma<0.0){
+          DEBUG_MSG("Schema::initialize_cross_correlation(): failed cross init sigma");
+          continue;
+        }
+        if(corr_status!=CORRELATION_SUCCESSFUL){
+          rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+          DEBUG_MSG("Schema::initialize_cross_correlation(): failed correlation");
+          continue;
+        }
+
+        scalar_t cross_u = 0.0, cross_v = 0.0, cross_t = 0.0;
+        shape_function->map_to_u_v_theta(query_pt[0],query_pt[1],cross_u,cross_v,cross_t);
+
+        if(std::abs(cross_v)>1.0){ // fails the epipolar constraint
+          rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+          DEBUG_MSG("Schema::initialize_cross_correlation(): failed epipolar constraint");
+          continue;
+        }
+
+        const scalar_t cross_gamma = obj->gamma(shape_function);
+        DEBUG_MSG("Schema::initialize_cross_correlation(): gamma: " << cross_gamma);
+
+        if(std::abs(cross_gamma)>0.5){ // fails the similarity constraint
+          rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+          DEBUG_MSG("Schema::initialize_cross_correlation(): failed similarity constraint");
+          continue;
+        }
+
+        // assume success at this point
+
+        good_u.push_back(cross_u);
+        Point_Cloud_2D<scalar_t>::Point p;
+        p.x = query_pt[0];
+        p.y = query_pt[1];
+        point_cloud.pts.push_back(p);
+        rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS) = cross_u;
+        rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_Y_FS) = cross_v;
+        rect_schema->local_field_value(local_id,GAMMA_FS) = cross_gamma;
+
+        cv::Point pt1(query_pt[0],query_pt[1]);
+        cv::circle(left_img_rmp, pt1, 10, cv::Scalar(0),3);
+        //cv::circle(pyr_left_1, pt1, 10, cv::Scalar(0),3);
+
+      }
+      // output image for debugging with iteration number in filename
+      std::stringstream debug_name;
+      debug_name << "initial_pass_"<< loop << ".png";
+      cv::imwrite(debug_name.str(),left_img_rmp);
+      //cv::imwrite(debug_name.str(),pyr_left_1);
+    }
+
+    // try top down initialization
+
+    std::FILE * disparityFilePtr = fopen("final_disparity.txt","w");
+    for(int_t local_id = 0; local_id < rect_schema->local_num_subsets(); ++local_id){
+      if(rect_schema->local_field_value(local_id, SIGMA_FS)<0.0) continue;
+      fprintf(disparityFilePtr,"%f %f %f %f %f\n",
+          rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS),
+          rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS),
+          rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS),
+          rect_schema->local_field_value(local_id,ITERATIONS_FS),
+          rect_schema->local_field_value(local_id,GAMMA_FS));
+    }
+    fclose(disparityFilePtr);
+
+    assert(false);
+
+    // conduct search for subsets that didn't converge (white circles)
+
+    // start from the left and go right
+
+
+    for(int_t local_id=1;local_id < rect_schema->local_num_subsets();++local_id){ // start at 1 since the 0th wont have a left neigh
+      if(rect_schema->local_field_value(local_id,OMEGA_FS) < sssig_threshold) continue; // not enough gradient information
+      if(rect_schema->local_field_value(local_id,SIGMA_FS) > 0.0) continue; // positive sigma means it converged in a previous step
+      if(rect_schema->local_field_value(local_id-1,SIGMA_FS) < 0.0) continue; // bad left neigh
+      const int_t my_x = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS);
+      const int_t my_y = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
+      int_t trial_u = rect_schema->local_field_value(local_id-1,SUBSET_DISPLACEMENT_X_FS) - subset_size < 0 ? 0 : rect_schema->local_field_value(local_id-1,SUBSET_DISPLACEMENT_X_FS) - subset_size;
+      const int_t max_u = rect_schema->local_field_value(local_id-1,SUBSET_DISPLACEMENT_X_FS) - subset_size > 0 ? rect_schema->local_field_value(local_id-1,SUBSET_DISPLACEMENT_X_FS) + subset_size : 2 * subset_size;
+      int_t iteration_count = 0;
+      for(;trial_u < max_u; ++trial_u){
+        iteration_count++;
+
+        // do correlation with trial u
+        Teuchos::RCP<Local_Shape_Function> shape_function = Teuchos::rcp(new Affine_Shape_Function(true,true,true));
+        shape_function->insert_motion(trial_u,0.0);
+        DEBUG_MSG("trial u " << trial_u);
+        Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(rect_schema.get(),rect_schema->subset_global_id(local_id)));
+        int_t num_iterations = -1;
+        Status_Flag corr_status = obj->computeUpdateFast(shape_function,num_iterations);
+
+        // check the sigma values and status flag
+        scalar_t noise_std_dev = 0.0;
+        const scalar_t cross_sigma = obj->sigma(shape_function,noise_std_dev);
+        const scalar_t cross_gamma = obj->gamma(shape_function);
+        rect_schema->local_field_value(local_id,SIGMA_FS) = cross_sigma;
+        if(cross_sigma<0.0) continue;
+        if(cross_sigma==0.0) {
+          DEBUG_MSG("sigma = 0.0, which indicates something went wrong with this converged solution (possibly no pixels in deformed subset)");
+          rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+          continue;
+        }
+        if(corr_status!=CORRELATION_SUCCESSFUL){
+          DEBUG_MSG("correlation failed");
+          rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+          continue;
+        }
+
+        // success
+        scalar_t cross_u = 0.0, cross_v = 0.0, cross_t = 0.0;
+        shape_function->map_to_u_v_theta(my_x,my_y,cross_u,cross_v,cross_t);
+        if(cross_v >= v_tol){
+          DEBUG_MSG("too much vertical displacement");
+          rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+          continue;
+        }
+
+        rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS) = cross_u;
+        rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_Y_FS) = cross_v;
+        rect_schema->local_field_value(local_id,ITERATIONS_FS) = iteration_count;
+        DEBUG_MSG("***  FOUND search SUBSET *** sigma " << cross_sigma << " gamma " << cross_gamma);
+//        assert(cross_v < v_tol); // TODO TODO TODO consider removing this constraint later
+//        assert(cross_u > (scalar_t)start_u);
+//        assert(cross_u < (scalar_t)end_u);
+
+        cv::Point pt1(my_x,my_y);
+        cv::circle(left_img_rmp, pt1, 10, cv::Scalar(255),3);
+        //cv::circle(pyr_left_1, pt1, 10, cv::Scalar(255),3);
+        break;
+
+      }
+
+    }
+    //cv::imwrite("search_pass_left_neigh.png",pyr_left_1);
+    cv::imwrite("search_pass_left_neigh.png",left_img_rmp);
+
+
+    // work from the right to left
+
+    for(int_t local_id = rect_schema->local_num_subsets()-2;local_id>0;--local_id){
+      if(rect_schema->local_field_value(local_id,OMEGA_FS) < sssig_threshold) continue; // not enough gradient information
+      if(rect_schema->local_field_value(local_id,SIGMA_FS) > 0.0) continue; // positive sigma means it converged in a previous step
+      if(rect_schema->local_field_value(local_id+1,SIGMA_FS) < 0.0) continue; // bad right neigh
+      const int_t my_x = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS);
+      const int_t my_y = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
+      int_t trial_u = rect_schema->local_field_value(local_id+1,SUBSET_DISPLACEMENT_X_FS) - subset_size < 0 ? 0 : rect_schema->local_field_value(local_id+1,SUBSET_DISPLACEMENT_X_FS) - subset_size;
+      const int_t max_u = rect_schema->local_field_value(local_id+1,SUBSET_DISPLACEMENT_X_FS) - subset_size > 0 ? rect_schema->local_field_value(local_id+1,SUBSET_DISPLACEMENT_X_FS) + subset_size : 2 * subset_size;
+      int_t iteration_count = 0;
+      for(;trial_u < max_u; ++trial_u){
+        iteration_count++;
+
+        // do correlation with trial u
+        Teuchos::RCP<Local_Shape_Function> shape_function = Teuchos::rcp(new Affine_Shape_Function(true,true,true));
+        shape_function->insert_motion(trial_u,0.0);
+        DEBUG_MSG("trial u " << trial_u);
+        Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(rect_schema.get(),rect_schema->subset_global_id(local_id)));
+        int_t num_iterations = -1;
+        Status_Flag corr_status = obj->computeUpdateFast(shape_function,num_iterations);
+
+        // check the sigma values and status flag
+        scalar_t noise_std_dev = 0.0;
+        const scalar_t cross_sigma = obj->sigma(shape_function,noise_std_dev);
+        const scalar_t cross_gamma = obj->gamma(shape_function);
+        rect_schema->local_field_value(local_id,SIGMA_FS) = cross_sigma;
+        if(cross_sigma<0.0) continue;
+        if(cross_sigma==0.0) {
+          DEBUG_MSG("sigma = 0.0, which indicates something went wrong with this converged solution (possibly no pixels in deformed subset)");
+          rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+          continue;
+        }
+        if(corr_status!=CORRELATION_SUCCESSFUL){
+          DEBUG_MSG("correlation failed");
+          rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+          continue;
+        }
+
+        // success
+        scalar_t cross_u = 0.0, cross_v = 0.0, cross_t = 0.0;
+        shape_function->map_to_u_v_theta(my_x,my_y,cross_u,cross_v,cross_t);
+        if(cross_v >= v_tol){
+          DEBUG_MSG("too much vertical displacement");
+          rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+          continue;
+        }
+
+        rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS) = cross_u;
+        rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_Y_FS) = cross_v;
+        rect_schema->local_field_value(local_id,ITERATIONS_FS) = iteration_count;
+        DEBUG_MSG("***  FOUND search SUBSET *** sigma " << cross_sigma << " gamma " << cross_gamma);
+//        assert(cross_v < v_tol); // TODO TODO TODO consider removing this constraint later
+//        assert(cross_u > (scalar_t)start_u);
+//        assert(cross_u < (scalar_t)end_u);
+
+        cv::Point pt1(my_x,my_y);
+        cv::circle(left_img_rmp, pt1, 10, cv::Scalar(255),3);
+        //cv::circle(pyr_left_1, pt1, 10, cv::Scalar(100),3);
+        break;
+
+      }
+
+    }
+    //cv::imwrite("search_pass_left_neigh_2.png",pyr_left_1);
+    cv::imwrite("search_pass_left_neigh_2.png",left_img_rmp);
+
+    // top down
+    const int_t num_cols = (left_img_rmp.cols - 2*subset_size)/step_size;
+    const int_t num_rows = (left_img_rmp.rows - 2*subset_size)/step_size;
+    for(int_t row=1;row<num_rows;++row){
+      for(int_t col=0;col<num_cols;++col){
+        const int_t local_id = row * num_cols + col;
+        const int_t neigh_id = (row-1)*num_cols + col;
+        //for(int_t local_id = rect_schema->local_num_subsets()-2;local_id>0;--local_id){
+        if(rect_schema->local_field_value(local_id,OMEGA_FS) < sssig_threshold) continue; // not enough gradient information
+        if(rect_schema->local_field_value(local_id,SIGMA_FS) > 0.0) continue; // positive sigma means it converged in a previous step
+        if(rect_schema->local_field_value(neigh_id,SIGMA_FS) < 0.0) continue; // bad right neigh
+        const int_t my_x = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS);
+        const int_t my_y = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
+        int_t trial_u = rect_schema->local_field_value(neigh_id,SUBSET_DISPLACEMENT_X_FS) - subset_size < 0 ? 0 : rect_schema->local_field_value(neigh_id,SUBSET_DISPLACEMENT_X_FS) - subset_size;  // TODO this window could be smaller for top down
+        const int_t max_u = rect_schema->local_field_value(neigh_id,SUBSET_DISPLACEMENT_X_FS) - subset_size > 0 ? rect_schema->local_field_value(neigh_id,SUBSET_DISPLACEMENT_X_FS) + subset_size : 2 * subset_size;
+        int_t iteration_count = 0;
+        for(;trial_u < max_u; ++trial_u){
+          iteration_count++;
+
+          // do correlation with trial u
+          Teuchos::RCP<Local_Shape_Function> shape_function = Teuchos::rcp(new Affine_Shape_Function(true,true,true));
+          shape_function->insert_motion(trial_u,0.0);
+          DEBUG_MSG("trial u " << trial_u);
+          Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(rect_schema.get(),rect_schema->subset_global_id(local_id)));
+          int_t num_iterations = -1;
+          Status_Flag corr_status = obj->computeUpdateFast(shape_function,num_iterations);
+
+          // check the sigma values and status flag
+          scalar_t noise_std_dev = 0.0;
+          const scalar_t cross_sigma = obj->sigma(shape_function,noise_std_dev);
+          const scalar_t cross_gamma = obj->gamma(shape_function);
+          rect_schema->local_field_value(local_id,SIGMA_FS) = cross_sigma;
+          if(cross_sigma<0.0) continue;
+          if(cross_sigma==0.0) {
+            DEBUG_MSG("sigma = 0.0, which indicates something went wrong with this converged solution (possibly no pixels in deformed subset)");
+            rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+            continue;
+          }
+          if(corr_status!=CORRELATION_SUCCESSFUL){
+            DEBUG_MSG("correlation failed");
+            rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+            continue;
+          }
+
+          // success
+          scalar_t cross_u = 0.0, cross_v = 0.0, cross_t = 0.0;
+          shape_function->map_to_u_v_theta(my_x,my_y,cross_u,cross_v,cross_t);
+          if(cross_v >= v_tol){
+            DEBUG_MSG("too much vertical displacement");
+            rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+            continue;
+          }
+
+          rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS) = cross_u;
+          rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_Y_FS) = cross_v;
+          rect_schema->local_field_value(local_id,ITERATIONS_FS) = iteration_count;
+          DEBUG_MSG("***  FOUND search SUBSET *** sigma " << cross_sigma << " gamma " << cross_gamma);
+          //        assert(cross_v < v_tol); // TODO TODO TODO consider removing this constraint later
+          //        assert(cross_u > (scalar_t)start_u);
+          //        assert(cross_u < (scalar_t)end_u);
+
+          cv::Point pt1(my_x,my_y);
+          cv::circle(left_img_rmp, pt1, 10, cv::Scalar(255),3);
+          //cv::circle(pyr_left_1, pt1, 10, cv::Scalar(100),3);
+          break;
+
+        }
+
+      }
+    }
+    //cv::imwrite("search_pass_left_neigh_2.png",pyr_left_1);
+    cv::imwrite("search_pass_left_neigh_3.png",left_img_rmp);
+
+
+    // bottom up
+    for(int_t row=num_rows-2;row>=0;--row){
+      for(int_t col=0;col<num_cols;++col){
+        const int_t local_id = row * num_cols + col;
+        const int_t neigh_id = (row+1)*num_cols + col;
+        //for(int_t local_id = rect_schema->local_num_subsets()-2;local_id>0;--local_id){
+        if(rect_schema->local_field_value(local_id,OMEGA_FS) < sssig_threshold) continue; // not enough gradient information
+        if(rect_schema->local_field_value(local_id,SIGMA_FS) > 0.0) continue; // positive sigma means it converged in a previous step
+        if(rect_schema->local_field_value(neigh_id,SIGMA_FS) < 0.0) continue; // bad right neigh
+        const int_t my_x = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS);
+        const int_t my_y = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
+        int_t trial_u = rect_schema->local_field_value(neigh_id,SUBSET_DISPLACEMENT_X_FS) - subset_size < 0 ? 0 : rect_schema->local_field_value(neigh_id,SUBSET_DISPLACEMENT_X_FS) - subset_size;  // TODO this window could be smaller for top down
+        const int_t max_u = rect_schema->local_field_value(neigh_id,SUBSET_DISPLACEMENT_X_FS) - subset_size > 0 ? rect_schema->local_field_value(neigh_id,SUBSET_DISPLACEMENT_X_FS) + subset_size : 2 * subset_size;
+        int_t iteration_count = 0;
+        for(;trial_u < max_u; ++trial_u){
+          iteration_count++;
+
+          // do correlation with trial u
+          Teuchos::RCP<Local_Shape_Function> shape_function = Teuchos::rcp(new Affine_Shape_Function(true,true,true));
+          shape_function->insert_motion(trial_u,0.0);
+          DEBUG_MSG("trial u " << trial_u);
+          Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(rect_schema.get(),rect_schema->subset_global_id(local_id)));
+          int_t num_iterations = -1;
+          Status_Flag corr_status = obj->computeUpdateFast(shape_function,num_iterations);
+
+          // check the sigma values and status flag
+          scalar_t noise_std_dev = 0.0;
+          const scalar_t cross_sigma = obj->sigma(shape_function,noise_std_dev);
+          const scalar_t cross_gamma = obj->gamma(shape_function);
+          rect_schema->local_field_value(local_id,SIGMA_FS) = cross_sigma;
+          if(cross_sigma<0.0) continue;
+          if(cross_sigma==0.0) {
+            DEBUG_MSG("sigma = 0.0, which indicates something went wrong with this converged solution (possibly no pixels in deformed subset)");
+            rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+            continue;
+          }
+          if(corr_status!=CORRELATION_SUCCESSFUL){
+            DEBUG_MSG("correlation failed");
+            rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+            continue;
+          }
+
+          // success
+          scalar_t cross_u = 0.0, cross_v = 0.0, cross_t = 0.0;
+          shape_function->map_to_u_v_theta(my_x,my_y,cross_u,cross_v,cross_t);
+          if(cross_v >= v_tol){
+            DEBUG_MSG("too much vertical displacement");
+            rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
+            continue;
+          }
+
+          rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS) = cross_u;
+          rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_Y_FS) = cross_v;
+          rect_schema->local_field_value(local_id,ITERATIONS_FS) = iteration_count;
+          DEBUG_MSG("***  FOUND search SUBSET *** sigma " << cross_sigma << " gamma " << cross_gamma);
+          //        assert(cross_v < v_tol); // TODO TODO TODO consider removing this constraint later
+          //        assert(cross_u > (scalar_t)start_u);
+          //        assert(cross_u < (scalar_t)end_u);
+
+          cv::Point pt1(my_x,my_y);
+          cv::circle(left_img_rmp, pt1, 10, cv::Scalar(255),3);
+          //cv::circle(pyr_left_1, pt1, 10, cv::Scalar(100),3);
+          break;
+
+        }
+
+      }
+    }
+    //cv::imwrite("search_pass_left_neigh_2.png",pyr_left_1);
+    cv::imwrite("search_pass_left_neigh_4.png",left_img_rmp);
+
+    // write the output json file
+    delete [] WORK;
+    delete [] GWORK;
+    delete [] IWORK;
+    delete [] IPIV;
+
+    // TODO TODO TODO reset the coordinates field!
+
+    assert(false);
+    DEBUG_MSG("Schema::initialize_cross_correlation(): rectified correspondences successful");
+    return 0;
+  }
+
   if(cross_initialization_method_==USE_SPACE_FILLING_ITERATIONS){
     DEBUG_MSG("Schema::initialize_cross_correlation(): using feature matching and space filling iterations to initialize");
     float feature_epi_dist_tol = 0.5f;
