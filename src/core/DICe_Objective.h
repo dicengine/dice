@@ -234,6 +234,10 @@ public:
   virtual ~Objective_ZNSSD(){}
 
   /// See base class documentation
+  virtual scalar_t gradient_norm(Teuchos::RCP<Local_Shape_Function> shape_function);
+
+
+  /// See base class documentation
   virtual Status_Flag computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
     int_t & num_iterations);
 

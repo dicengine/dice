@@ -311,6 +311,46 @@ Objective::computeUpdateRobust(Teuchos::RCP<Local_Shape_Function> shape_function
   return status_flag;
 }
 
+scalar_t
+Objective_ZNSSD::gradient_norm(Teuchos::RCP<Local_Shape_Function> shape_function){
+  TEUCHOS_TEST_FOR_EXCEPTION(!subset_->has_gradients(),std::runtime_error,"Error, image gradients have not been computed but are needed here.");
+  int_t N = shape_function->num_params(); // one degree of freedom for each shape function parameter
+  assert(N>=2);
+  Teuchos::ArrayRCP<double> q(N,0.0);
+  std::vector<scalar_t> residuals(N,0.0);
+  Teuchos::ArrayRCP<scalar_t> gradGx = subset_->grad_x_array();
+  Teuchos::ArrayRCP<scalar_t> gradGy = subset_->grad_y_array();
+  const scalar_t cx = subset_->centroid_x();
+  const scalar_t cy = subset_->centroid_y();
+  const scalar_t meanF = subset_->mean(REF_INTENSITIES);
+
+  // update the deformed image with the new deformation:
+  try{
+    subset_->initialize(schema_->def_img(subset_->sub_image_id()),DEF_INTENSITIES,shape_function,schema_->interpolation_method());
+  }
+  catch (...) {
+    return -1.0;
+  }
+
+  const scalar_t meanG = subset_->mean(DEF_INTENSITIES);
+  const bool use_ref_grads = schema_->def_img()->has_gradients() ? false : true;
+  scalar_t GmF = 0.0;
+  for(int_t index=0;index<subset_->num_pixels();++index){
+    if(subset_->is_deactivated_this_step(index)||!subset_->is_active(index)) continue;
+    GmF = (subset_->def_intensities(index) - meanG) - (subset_->ref_intensities(index) - meanF);
+    for(int_t i=0;i<N;++i)
+      residuals[i] = 0.0;
+    shape_function->residuals(subset_->x(index),subset_->y(index),cx,cy,gradGx[index],gradGy[index],residuals,use_ref_grads);
+    for(int_t i=0;i<N;++i){
+      q[i] += GmF*residuals[i];
+    }
+  }
+  scalar_t grad_q = 0.0;
+  for(int_t i=0;i<N;++i)
+    grad_q += q[i]*q[i];
+  return std::sqrt(grad_q);
+}
+
 Status_Flag
 Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
   int_t & num_iterations){
