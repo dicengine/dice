@@ -155,6 +155,24 @@ const int_t y):
     int_t & num_iterations,
     const scalar_t & override_tol = -1.0);
 
+  /// \brief Conducts a search of the gradient over the window sizes specified and initializes
+  /// the shape function with the parameter values that are local minima of the gradient
+  /// and the lowest value of the objective function
+  /// \param shape_function pointer to the class that holds the deformation parameter values
+  /// \param index_a the index of the first parameter to sample
+  /// \param index_b the index of the second parameter to sample
+  /// \param init initial guess of the parameter
+  /// \param step step sizes to use for each parameter
+  /// \param window window size to use for each parameter
+  void gradSampleMin2D(Teuchos::RCP<Local_Shape_Function> shape_function,
+      size_t index_a, size_t index_b,
+      const scalar_t & init_a, const scalar_t & init_b,
+      const scalar_t & step_a, const scalar_t & step_b,
+      const scalar_t & window_a, const scalar_t & window_b);
+
+  /// See base class documentation
+  virtual scalar_t gradient_norm(Teuchos::RCP<Local_Shape_Function> shape_function) = 0;
+
   /// \brief Returns the current value of the field specified. These values are stored in the schema
   /// \param spec Field_Spec that defines the requested field
   const precision_t & global_field_value(const DICe::field_enums::Field_Spec spec)const{
@@ -236,7 +254,6 @@ public:
   /// See base class documentation
   virtual scalar_t gradient_norm(Teuchos::RCP<Local_Shape_Function> shape_function);
 
-
   /// See base class documentation
   virtual Status_Flag computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
     int_t & num_iterations);
@@ -258,6 +275,10 @@ public:
 
   /// See base class documentation
   using Objective::sub_image_id;
+
+  /// See base class documentation
+  using Objective::gradSampleMin2D;
+
 };
 
 }// End DICe Namespace

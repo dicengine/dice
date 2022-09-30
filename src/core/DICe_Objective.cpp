@@ -290,6 +290,75 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
 //  schema_->mesh()->get_field(DICe::field_enums::FIELD_10_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_sub_r_approx);
 }
 
+
+void
+Objective::gradSampleMin2D(Teuchos::RCP<Local_Shape_Function> shape_function,
+    size_t index_a, size_t index_b,
+    const scalar_t & init_a, const scalar_t & init_b,
+    const scalar_t & step_a, const scalar_t & step_b,
+    const scalar_t & window_a, const scalar_t & window_b){
+
+  // this method will change the values of the parameters at index_a and index_b to the ones that are closest to stationary
+  // points in the gradient and also minimize the objective function, leaving the other parameters in the shape function alone
+
+  TEUCHOS_TEST_FOR_EXCEPTION((int_t)index_a>=shape_function->num_params(),std::runtime_error,"Error, dimension error.");
+  TEUCHOS_TEST_FOR_EXCEPTION((int_t)index_b>=shape_function->num_params(),std::runtime_error,"Error, dimension error.");
+
+  const std::vector<int_t> neigh_i = {-1,0,1,1,1,0,-1,-1};
+  const std::vector<int_t> neigh_j = {-1,-1,-1,0,1,1,1,0};
+  const int_t num_steps_a = (int_t)(window_a/step_a);
+  const int_t num_steps_b = (int_t)(window_b/step_b);
+  const int_t num_grid = num_steps_a*num_steps_b;
+  DEBUG_MSG("Objective::gradSampleMin2D: number of grid points for sampling: " << num_grid);
+  std::vector<scalar_t> grads(num_grid,0.0);
+
+  // evaluate the gradient at all the grid points
+  for(int_t i = 0;i<num_steps_a;++i){
+    for(int_t j = 0; j<num_steps_b;++j){
+      (*shape_function)(index_a) = init_a - window_a/2.0 + i*step_a;
+      (*shape_function)(index_b) = init_b - window_b/2.0 + j*step_b;
+      //shape_function->insert(params); // don't insert because that wipes out the other parameters
+      grads[j*num_steps_a+i] = gradient_norm(shape_function);
+    }
+  }
+
+  // find the local minima (not on the boundary)
+  std::vector<std::pair<size_t,scalar_t> > mins;
+  mins.reserve(num_grid/10);
+  for(int_t i = 1;i<num_steps_a-1;++i){
+    for(int_t j = 1; j<num_steps_b-1;++j){
+      bool is_min = true;
+      for(size_t neigh=0;neigh<neigh_i.size();++neigh){
+        if(grads[j*num_steps_a+i] > grads[(j+neigh_j[neigh])*num_steps_a+i+neigh_i[neigh]]){
+          is_min = false;
+          break;
+        }
+      }
+      if(is_min){
+        // evaluate the objective for this min:
+        (*shape_function)(index_a) = init_a - window_a/2.0 + i*step_a;
+        (*shape_function)(index_b) = init_b - window_b/2.0 + j*step_b;
+        //shape_function->insert(params);
+        const scalar_t gamma_ = gamma(shape_function);
+        mins.push_back(std::pair<size_t,scalar_t>(j*num_steps_a+i,gamma_));
+      }
+    }
+  }
+  // find the smallest values of the mins
+  std::pair<size_t,scalar_t> min_of_mins = *std::min_element(mins.cbegin(), mins.cend(), [](const std::pair<size_t,scalar_t>& lhs, const std::pair<size_t,scalar_t>& rhs) {
+    return lhs.second < rhs.second;
+  });
+  const int_t min_index = min_of_mins.first;
+  const int_t min_j = min_index / num_steps_a;
+  const int_t min_i = min_index - min_j*num_steps_a;
+  const scalar_t min_b = init_b - window_b/2.0 + min_j*step_b;
+  const scalar_t min_a = init_a - window_a/2.0 + min_i*step_a;
+
+  // initialize the shape function
+  (*shape_function)(index_a) = min_a;
+  (*shape_function)(index_b) = min_b;
+}
+
 Status_Flag
 Objective::computeUpdateRobust(Teuchos::RCP<Local_Shape_Function> shape_function,
   int_t & num_iterations,
