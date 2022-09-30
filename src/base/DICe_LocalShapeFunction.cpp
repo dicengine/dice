@@ -80,6 +80,14 @@ Local_Shape_Function::update(const std::vector<scalar_t> & update){
     parameters_[i] += update[i];
 }
 
+
+void
+Local_Shape_Function::insert(const std::vector<scalar_t> & update){
+  assert(update.size()==parameters_.size());
+  for(size_t i=0;i<parameters_.size();++i)
+    parameters_[i] = update[i];
+}
+
 bool
 Local_Shape_Function::test_for_convergence(const std::vector<scalar_t> & old_parameters,
   const scalar_t & tol){

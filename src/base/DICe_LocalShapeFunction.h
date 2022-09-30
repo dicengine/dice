@@ -229,9 +229,13 @@ public:
     std::vector<scalar_t> & high_order_terms,
     const bool use_ref_grads=false)=0;
 
-  /// update the parameter values based on an input vector
+  /// update the parameter values based on an input vector (sum to original values)
   /// \param update reference to the update vector
   void update(const std::vector<scalar_t> & update);
+
+  /// update the parameter values based on an input vector
+  /// \param update reference to the update vector
+  void insert(const std::vector<scalar_t> & update);
 
   /// returns true if the solution is converged
   /// \param old_parameters vector of the previous guess for the parameters
