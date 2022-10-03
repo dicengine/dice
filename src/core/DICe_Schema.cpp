@@ -2962,7 +2962,6 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
   }
 
   if(cross_initialization_method_==USE_RECTIFIED_CORRESPONDENCES){
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Not completely implemented yet");
 	  DEBUG_MSG("Schema::initialize_cross_correlation(): using correspondences from rectified images to initialize");
 
 	  // create rectified images and store them in the .dice folder
@@ -2983,32 +2982,13 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 	  cv::remap(right_img, right_img_rmp, map21, map22, cv::INTER_LINEAR);
 
     create_directory(".dice");
-
-	  // downsample the rectified image
-//    cv::Mat pyr_left_1, pyr_left_2, pyr_left_3, pyr_left_4;
-//    cv::pyrDown(left_img_rmp,pyr_left_1);
-//    cv::Mat pyr_right_1;
-//    cv::pyrDown(right_img_rmp,pyr_right_1);
-//    cv::imwrite(".dice/pyr_1.png",pyr_left_1);
-//    cv::pyrDown(pyr_left_1,pyr_left_2);
-//    cv::imwrite(".dice/pyr_2.png",pyr_left_2);
-//    cv::pyrDown(pyr_left_2,pyr_left_3);
-//    cv::imwrite(".dice/pyr_3.png",pyr_left_3);
-//    cv::pyrDown(pyr_left_3,pyr_left_4);
-//    cv::imwrite(".dice/pyr_4.png",pyr_left_4);
-
 	  std::string outname_left = ".dice/left_rectified.png";
 	  std::string outname_right = ".dice/right_rectified.png";
-
     cv::imwrite(outname_left,left_img_rmp);
     cv::imwrite(outname_right,right_img_rmp);
-//    cv::imwrite(outname_left,pyr_left_1);
-//    cv::imwrite(outname_right,pyr_right_1);
-
     // update the left and right images for stereo cross-correlation
     set_ref_image(outname_left);
     set_def_image(outname_right);
-
 
 	  // do a feature matching on the rectified images
 
@@ -3070,31 +3050,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 
     // set up a point cloud
     DEBUG_MSG("creating the point cloud using nanoflann");
-    Point_Cloud_2D<scalar_t> point_cloud;//_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
-    point_cloud.pts.resize(good_left_x.size());
-    for(size_t i=0;i<good_left_x.size();++i){
-      point_cloud.pts[i].x = good_left_x[i];
-      point_cloud.pts[i].y = good_left_y[i];
-    }
-    const int_t N = 3;
-    int *IPIV = new int[N+1];
-    int LWORK = N*N;
-    int INFO = 0;
-    double *WORK = new double[LWORK];
-    double *GWORK = new double[10*N];
-    int *IWORK = new int[LWORK];
-    // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
-    Teuchos::LAPACK<int,double> lapack;
-    //std::vector<std::pair<size_t,scalar_t> > ret_matches;
+    Point_Cloud_2D<scalar_t> point_cloud(good_left_x,good_left_y);//_ = Teuchos::rcp(new Point_Cloud_2D<scalar_t>());
     const int_t num_neigh = 7;
-    nanoflann::SearchParams params;
-    params.sorted = true; // sort by distance in ascending order
-    //TEUCHOS_TEST_FOR_EXCEPTION(step_size_x_<=0.0,std::runtime_error,"");
-    //const double neigh_rad_sq = (step_size_x_*2)*(step_size_x_*2);
-    scalar_t query_pt[2];
-    std::vector<size_t> ret_index(num_neigh);
-    std::vector<scalar_t> out_dist_sqr(num_neigh);
-
 
     // create a schema for the course grid that will be used to initialize the subsets
     Teuchos::RCP<Teuchos::ParameterList> schema_params = rcp(new Teuchos::ParameterList());
@@ -3118,18 +3075,9 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     for(int_t local_id=0;local_id<rect_schema->local_num_subsets();++local_id){
       const int_t cx = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS);
       const int_t cy = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
-      scalar_t SSSIG = 0.0;
-      const int_t left_x = cx - subset_size/2;
-      const int_t right_x = left_x + subset_size;
-      const int_t top_y = cy - subset_size/2;
-      const int_t bottom_y = top_y + subset_size;
-      for(int_t y=top_y;y<bottom_y;++y){
-        for(int_t x=left_x;x<right_x;++x){
-          SSSIG += rect_schema->ref_img()->grad_x(x,y)*rect_schema->ref_img()->grad_x(x,y) +
-              rect_schema->ref_img()->grad_y(x,y)*rect_schema->ref_img()->grad_y(x,y);
-        }
-      }
-      SSSIG /= subset_size==0.0?1.0:(subset_size*subset_size);
+      Subset sssig_subset(cx,cy,subset_size,subset_size);
+      sssig_subset.initialize(rect_schema->ref_img());
+      const scalar_t SSSIG = sssig_subset.sssig();
       rect_schema->local_field_value(local_id,OMEGA_FS) = SSSIG; // borrowing omega since there isn't an sssig field
       if(SSSIG < sssig_threshold){
         rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
@@ -3138,63 +3086,18 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       }
     } // end subset check loop
 
-
     const int_t num_loops = 10;  // TODO TODO TODO remove this loop?
 
     for(int_t loop=0;loop<num_loops; ++loop){
-
-      DEBUG_MSG("building the kd-tree");
-      Teuchos::RCP<kd_tree_2d_t> kd_tree = Teuchos::rcp(new kd_tree_2d_t(2, point_cloud, nanoflann::KDTreeSingleIndexAdaptorParams(10)));
-      kd_tree->buildIndex();
-      DEBUG_MSG("kd-tree completed");
 
       for(int_t local_id=0;local_id<rect_schema->local_num_subsets();++local_id){
 
         if(rect_schema->local_field_value(local_id,OMEGA_FS) < sssig_threshold) continue; // not enough gradient information
         if(rect_schema->local_field_value(local_id,SIGMA_FS) > 0.0) continue; // positive sigma means it converged in a previous step
-//        cv::Point pt1(query_pt[0],query_pt[1]);
-//        cv::circle(left_img_rmp, pt1, 10, cv::Scalar(0),3);
-
-        query_pt[0] = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS);
-        query_pt[1] = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
-        kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
-        Teuchos::SerialDenseMatrix<int_t,double> X_t(N,num_neigh, true);
-        Teuchos::SerialDenseMatrix<int_t,double> X_t_X(N,N,true);
-        for(int_t i=0;i<num_neigh;++i){
-          X_t(0,i) = 1.0;
-          X_t(1,i) = point_cloud.pts[ret_index[i]].x - query_pt[0];
-          X_t(2,i) = point_cloud.pts[ret_index[i]].y - query_pt[1];
-        }
-        // set up X^T*X
-        for(int_t k=0;k<N;++k){
-          for(int_t m=0;m<N;++m){
-            for(int_t j=0;j<num_neigh;++j){
-              X_t_X(k,m) += X_t(k,j)*X_t(m,j);
-            }
-          }
-        }
-        lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
-        lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
-
-        Teuchos::ArrayRCP<double> u(num_neigh,0.0);
-        for(int_t j=0;j<num_neigh;++j){
-          u[j] = good_u[ret_index[j]];
-        }
-        // compute X^T*u
-        Teuchos::ArrayRCP<double> X_t_u(N,0.0);
-        for(int_t k=0;k<N;++k)
-          for(int_t j=0;j<num_neigh;++j)
-            X_t_u[k] += X_t(k,j)*u[j];
-
-        // compute the coeffs
-        Teuchos::ArrayRCP<double> coeffs(N,0.0);
-        for(int_t k=0;k<N;++k)
-          for(int_t j=0;j<N;++j)
-            coeffs[k] += X_t_X(k,j)*X_t_u[j];
-
-        const float init_u = coeffs[0];
-
-        std::cout << " initial guess for subset " << local_id << " at "  << query_pt[0] <<  " " << query_pt[1] << " is " << init_u << std::endl;
+        const scalar_t x = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS);
+        const scalar_t y = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
+        const scalar_t init_u = point_cloud.knn_least_squares(x,y,num_neigh, good_u);
+        DEBUG_MSG("Schema::initialize_cross_correlation(): initial guess for subset " << local_id << " at "  << x <<  " " << y << " is " << init_u);
         Teuchos::RCP<Local_Shape_Function> shape_function = Teuchos::rcp(new Affine_Shape_Function(true,true,true));
         shape_function->insert_motion(init_u,0.0);
         Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(rect_schema.get(),rect_schema->subset_global_id(local_id)));
@@ -3215,46 +3118,33 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
           DEBUG_MSG("Schema::initialize_cross_correlation(): failed correlation");
           continue;
         }
-
         scalar_t cross_u = 0.0, cross_v = 0.0, cross_t = 0.0;
-        shape_function->map_to_u_v_theta(query_pt[0],query_pt[1],cross_u,cross_v,cross_t);
-
+        shape_function->map_to_u_v_theta(x,y,cross_u,cross_v,cross_t);
         if(std::abs(cross_v)>1.0){ // fails the epipolar constraint
           rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
           DEBUG_MSG("Schema::initialize_cross_correlation(): failed epipolar constraint");
           continue;
         }
-
         const scalar_t cross_gamma = obj->gamma(shape_function);
         DEBUG_MSG("Schema::initialize_cross_correlation(): gamma: " << cross_gamma);
-
         if(std::abs(cross_gamma)>0.5){ // fails the similarity constraint
           rect_schema->local_field_value(local_id,SIGMA_FS) = -1.0;
           DEBUG_MSG("Schema::initialize_cross_correlation(): failed similarity constraint");
           continue;
         }
-
         // assume success at this point
-
         good_u.push_back(cross_u);
-        Point_Cloud_2D<scalar_t>::Point p;
-        p.x = query_pt[0];
-        p.y = query_pt[1];
-        point_cloud.pts.push_back(p);
+        point_cloud.add_point(x, y);
         rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS) = cross_u;
         rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_Y_FS) = cross_v;
         rect_schema->local_field_value(local_id,GAMMA_FS) = cross_gamma;
-
-        cv::Point pt1(query_pt[0],query_pt[1]);
+        cv::Point pt1(x,y);
         cv::circle(left_img_rmp, pt1, 10, cv::Scalar(0),3);
-        //cv::circle(pyr_left_1, pt1, 10, cv::Scalar(0),3);
-
       }
       // output image for debugging with iteration number in filename
       std::stringstream debug_name;
       debug_name << "initial_pass_"<< loop << ".png";
       cv::imwrite(debug_name.str(),left_img_rmp);
-      //cv::imwrite(debug_name.str(),pyr_left_1);
     }
 
     // try top down initialization
@@ -3271,7 +3161,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     }
     fclose(disparityFilePtr);
 
-    assert(false);
+    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Implementation not completed yet");
 
     // conduct search for subsets that didn't converge (white circles)
 
@@ -3557,10 +3447,10 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     cv::imwrite("search_pass_left_neigh_4.png",left_img_rmp);
 
     // write the output json file
-    delete [] WORK;
-    delete [] GWORK;
-    delete [] IWORK;
-    delete [] IPIV;
+//    delete [] WORK;
+//    delete [] GWORK;
+//    delete [] IWORK;
+//    delete [] IPIV;
 
     // TODO TODO TODO reset the coordinates field!
 
