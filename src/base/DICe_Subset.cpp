@@ -366,7 +366,7 @@ Subset::sssig(){
   for(int_t i=0;i<num_pixels_;++i){
     sssig += grad_x_[i]*grad_x_[i] + grad_y_[i]*grad_y_[i];
   }
-  sssig /= num_pixels_==0.0?1.0:num_pixels_;
+  sssig /= num_pixels_==0?1.0:num_pixels_;
   return sssig;
 }
 
