@@ -34,6 +34,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        
+      - name: SSH keys setup
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY}}
 
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
