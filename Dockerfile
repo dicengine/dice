@@ -71,7 +71,8 @@ RUN unzip OpenCV320.zip && rm OpenCV320.zip
 RUN cd opencv-3.2.0 && mkdir build && cd build && cp /dice-2.0/scripts/ubuntu/docker/do-opencv-cmake-docker . && chmod +x do-opencv-cmake-docker && ./do-opencv-cmake-docker && make all install
 
 #Install DICE
-RUN cd /dice-2.0 && mkdir build && cd build && cp /dice-2.0/scripts/ubuntu/docker/do-dice-cmake-docker . && chmod +x do-dice-cmake-docker && ./do-dice-cmake-docker && make all
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+RUN --mount=type=ssh cd /dice-2.0 && mkdir build && cd build && cp /dice-2.0/scripts/ubuntu/docker/do-dice-cmake-docker . && chmod +x do-dice-cmake-docker && ./do-dice-cmake-docker && make all
 
 #Remove to shrink image
 RUN rm -r /trilinos-12.4.2-Source && rm -r /trilinos-12.4.2 && rm -r /dice-2.0/tests
