@@ -115,6 +115,7 @@ void create_string_maps()
   field_name_string[field_enums::MODEL_DISPLACEMENT_Z]                               = "MODEL_DISPLACEMENT_Z";
   field_name_string[field_enums::ROTATION_Z]                                         = "ROTATION_Z";
   field_name_string[field_enums::SIGMA]                                              = "SIGMA";
+  field_name_string[field_enums::SSSIG]                                              = "SSSIG";
   field_name_string[field_enums::GAMMA]                                              = "GAMMA";
   field_name_string[field_enums::BETA]                                               = "BETA";
   field_name_string[field_enums::OMEGA]                                              = "OMEGA";

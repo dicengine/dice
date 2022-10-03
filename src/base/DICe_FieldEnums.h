@@ -101,6 +101,7 @@ Field_Name
   MODEL_DISPLACEMENT_Z,
   ROTATION_Z,
   SIGMA,
+  SSSIG,
   GAMMA,
   BETA,
   OMEGA,
@@ -511,6 +512,8 @@ const Field_Spec EXACT_LAGRANGE_MULTIPLIER_FS(field_enums::SCALAR_FIELD_TYPE,fie
 /// field spec
 const Field_Spec SIGMA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SIGMA,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
+const Field_Spec SSSIG_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SSSIG,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
+/// field spec
 const Field_Spec GAMMA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::GAMMA,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
 /// field spec
 const Field_Spec BETA_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::BETA,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true);
@@ -706,7 +709,7 @@ const Field_Spec ROT_TRANS_3D_TRANS_Y_FS(field_enums::SCALAR_FIELD_TYPE, field_e
 const Field_Spec ROT_TRANS_3D_TRANS_Z_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_TRANS_Z, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 141;
+const int_t num_fields_defined = 142;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -742,6 +745,7 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     ROTATION_Z_NM1_FS,
     RESIDUAL_FS,
     SIGMA_FS,
+    SSSIG_FS,
     GAMMA_FS,
     BETA_FS,
     OMEGA_FS,
