@@ -124,10 +124,16 @@ public:
   /// \param x x coordinate of point of interest
   /// \param y y coordinate of point of interest
   /// \param num_neigh the number of neighbors to use in the fit
-  /// \param data the vector of values to fit, must be the same dimension as the point cloud points
-  T knn_least_squares(const T & x, const T & y, const int num_neigh, const std::vector<T> & data){
+  /// \param data the vector of vectors of values to fit, must be the same dimension as the point cloud points, each column of the vector gets fit
+  /// \param result the array holding the fit value for each column
+  void knn_least_squares(const T & x, const T & y, const int num_neigh, const std::vector<std::vector<T>> & data, std::vector<T> & result){
     // make sure data is the right size
-    TEUCHOS_TEST_FOR_EXCEPTION(data.size()!=pts.size(),std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(data.size()<1,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(data.size()!=result.size(),std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(data[0].size()!=pts.size(),std::runtime_error,"");
+    for(size_t i=0;i<result.size();++i)
+      result[i] =0.0;
+
     if(tree_requires_update){
       kd_tree = Teuchos::rcp(new kd_tree_2d_t(2, *this, nanoflann::KDTreeSingleIndexAdaptorParams(10)));
       kd_tree->buildIndex();
@@ -157,23 +163,37 @@ public:
     lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
     lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
 
-    Teuchos::ArrayRCP<double> neigh_data(num_neigh,0.0);
-    for(int j=0;j<num_neigh;++j){
-      neigh_data[j] = data[ret_index[j]];
+    for(size_t f=0;f<data.size();++f){
+      Teuchos::ArrayRCP<double> neigh_data(num_neigh,0.0);
+      for(int j=0;j<num_neigh;++j){
+        neigh_data[j] = data[f][ret_index[j]];
+      }
+      // compute X^T*u
+      Teuchos::ArrayRCP<double> X_t_u(N,0.0);
+      for(int k=0;k<N;++k)
+        for(int j=0;j<num_neigh;++j)
+          X_t_u[k] += X_t(k,j)*neigh_data[j];
+
+      // compute the coeffs
+      Teuchos::ArrayRCP<double> coeffs(N,0.0);
+      for(int k=0;k<N;++k)
+        for(int j=0;j<N;++j)
+          coeffs[k] += X_t_X(k,j)*X_t_u[j];
+
+      result[f] = coeffs[0];
     }
-    // compute X^T*u
-    Teuchos::ArrayRCP<double> X_t_u(N,0.0);
-    for(int k=0;k<N;++k)
-      for(int j=0;j<num_neigh;++j)
-        X_t_u[k] += X_t(k,j)*neigh_data[j];
-
-    // compute the coeffs
-    Teuchos::ArrayRCP<double> coeffs(N,0.0);
-    for(int k=0;k<N;++k)
-      for(int j=0;j<N;++j)
-        coeffs[k] += X_t_X(k,j)*X_t_u[j];
-
-    return coeffs[0];
+  }
+  /// method to perform a least squares fit of surrounding points
+  /// \param x x coordinate of point of interest
+  /// \param y y coordinate of point of interest
+  /// \param num_neigh the number of neighbors to use in the fit
+  /// \param data the vector of values to fit, must be the same dimension as the point cloud points
+  T knn_least_squares(const T & x, const T & y, const int num_neigh, const std::vector<T> & data){
+    std::vector<T> result(1,0.0);
+    std::vector<std::vector<T> > data_v(1);
+    data_v[0] = data;
+    knn_least_squares(x,y,num_neigh,data_v,result);
+    return result[0];
   }
   /// point struct
   struct Point
