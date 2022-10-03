@@ -71,6 +71,7 @@ Objective::gamma( Teuchos::RCP<Local_Shape_Function> shape_function) const {
     if(num_active_pixels > 0)
       gamma /= num_active_pixels==0.0?1.0:num_active_pixels;
   }
+  DEBUG_MSG("Objective::gamma(): Subset " << correlation_point_global_id_ << " gamma: " << gamma);
   return gamma;
 }
 
