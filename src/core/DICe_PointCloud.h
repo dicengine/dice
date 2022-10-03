@@ -42,16 +42,139 @@
 #ifndef DICE_POINTCLOUD_H
 #define DICE_POINTCLOUD_H
 
+#include <Teuchos_LAPACK.hpp>
+#include <Teuchos_SerialDenseMatrix.hpp>
+
 #include <nanoflann.hpp>
 
 #include <vector>
 
 using namespace nanoflann;
 
+namespace DICe {
+
+// forward declaration
+template <typename T>
+class DICE_LIB_DLL_EXPORT
+Point_Cloud_2D;
+
+/// a kd-tree index:
+typedef KDTreeSingleIndexAdaptor<
+  L2_Simple_Adaptor<scalar_t, Point_Cloud_2D<scalar_t> > ,
+  Point_Cloud_2D<scalar_t>,
+  2 /* dim */
+  > kd_tree_2d_t;
+
+template <typename T>
+class DICE_LIB_DLL_EXPORT
+Point_Cloud_3D;
+
+/// a kd-tree index:
+typedef KDTreeSingleIndexAdaptor<
+  L2_Simple_Adaptor<scalar_t, Point_Cloud_3D<scalar_t> > ,
+  Point_Cloud_3D<scalar_t>,
+  3 /* dim */
+  > kd_tree_3d_t;
+
 /// point clouds
 template <typename T>
-struct Point_Cloud_2D
-{
+class DICE_LIB_DLL_EXPORT
+Point_Cloud_2D{
+public:
+  /// default constructor with no arguments
+  Point_Cloud_2D():N(3),
+      tree_requires_update(true){
+    IPIV_v.resize(N+1);
+    IPIV = &IPIV_v[0];
+    LWORK = N*N;
+    INFO = 0;
+    WORK_v = std::vector<double>(LWORK);
+    WORK = &WORK_v[0];
+    GWORK_v = std::vector<double>(10*N);
+    GWORK = &GWORK_v[0];
+    IWORK_v = std::vector<int>(LWORK);
+    IWORK = &IWORK_v[0];
+    params.sorted = true; // sort by distance in ascending order
+  };
+  /// constructor with point cloud points passed in
+  /// \param x_in x coordinates of the point cloud
+  /// \param y_in y coordinates of the point cloud
+  Point_Cloud_2D(const std::vector<T> & x_in,
+      const std::vector<T> & y_in):Point_Cloud_2D(){
+    pts.resize(x_in.size());
+    assert(x_in.size()==y_in.size());
+    for(size_t i=0;i<x_in.size();++i){
+      pts[i].x = x_in[i];
+      pts[i].y = y_in[i];
+    }
+    kd_tree = Teuchos::rcp(new kd_tree_2d_t(2, *this, nanoflann::KDTreeSingleIndexAdaptorParams(10)));
+    kd_tree->buildIndex();
+    tree_requires_update = false;
+  }
+  /// function to add a point to the point cloud
+  /// since the points are changed the update flag is set since the kd tree will have to be rebuilt
+  void add_point(const T & x, const T & y){
+    Point_Cloud_2D<T>::Point p;
+    p.x = x;
+    p.y = y;
+    pts.push_back(p);
+    tree_requires_update = true;
+  }
+  /// method to perform a least squares fit of surrounding points
+  /// \param x x coordinate of point of interest
+  /// \param y y coordinate of point of interest
+  /// \param num_neigh the number of neighbors to use in the fit
+  /// \param data the vector of values to fit, must be the same dimension as the point cloud points
+  T knn_least_squares(const T & x, const T & y, const int num_neigh, const std::vector<T> & data){
+    // make sure data is the right size
+    TEUCHOS_TEST_FOR_EXCEPTION(data.size()!=pts.size(),std::runtime_error,"");
+    if(tree_requires_update){
+      kd_tree = Teuchos::rcp(new kd_tree_2d_t(2, *this, nanoflann::KDTreeSingleIndexAdaptorParams(10)));
+      kd_tree->buildIndex();
+    }
+
+    T query_pt[2];
+    std::vector<size_t> ret_index(num_neigh);
+    std::vector<T> out_dist_sqr(num_neigh);
+    query_pt[0] = x;
+    query_pt[1] = y;
+    kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+    Teuchos::SerialDenseMatrix<int,double> X_t(N,num_neigh, true);
+    Teuchos::SerialDenseMatrix<int,double> X_t_X(N,N,true);
+    for(int i=0;i<num_neigh;++i){
+      X_t(0,i) = 1.0;
+      X_t(1,i) = pts[ret_index[i]].x - query_pt[0];
+      X_t(2,i) = pts[ret_index[i]].y - query_pt[1];
+    }
+    // set up X^T*X
+    for(int k=0;k<N;++k){
+      for(int m=0;m<N;++m){
+        for(int j=0;j<num_neigh;++j){
+          X_t_X(k,m) += X_t(k,j)*X_t(m,j);
+        }
+      }
+    }
+    lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
+    lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
+
+    Teuchos::ArrayRCP<double> neigh_data(num_neigh,0.0);
+    for(int j=0;j<num_neigh;++j){
+      neigh_data[j] = data[ret_index[j]];
+    }
+    // compute X^T*u
+    Teuchos::ArrayRCP<double> X_t_u(N,0.0);
+    for(int k=0;k<N;++k)
+      for(int j=0;j<num_neigh;++j)
+        X_t_u[k] += X_t(k,j)*neigh_data[j];
+
+    // compute the coeffs
+    Teuchos::ArrayRCP<double> coeffs(N,0.0);
+    for(int k=0;k<N;++k)
+      for(int j=0;j<N;++j)
+        coeffs[k] += X_t_X(k,j)*X_t_u[j];
+
+    return coeffs[0];
+  }
   /// point struct
   struct Point
   {
@@ -84,19 +207,46 @@ struct Point_Cloud_2D
   ///   Look at bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
   template <class BBOX>
   bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
+
+private:
+  /// storage variable for the lapack routines
+  const int N;
+  /// flag to know when the kd tree needs to be rebuilt
+  bool tree_requires_update;
+  /// storage variable for the lapack routines
+  int *IPIV;
+  /// storage variable for the lapack routines
+  std::vector<int> IPIV_v;
+  /// storage variable for the lapack routines
+  int LWORK;
+  /// storage variable for the lapack routines
+  int INFO;
+  /// storage variable for the lapack routines
+  double *WORK;
+  /// storage variable for the lapack routines
+  std::vector<double> WORK_v;
+  /// storage variable for the lapack routines
+  double *GWORK;
+  /// storage variable for the lapack routines
+  std::vector<double> GWORK_v;
+  /// storage variable for the lapack routines
+  int *IWORK;
+  /// storage variable for the lapack routines
+  std::vector<int> IWORK_v;
+  // Note, LAPACK does not allow templating on long int or scalar_t...must use int and double
+  Teuchos::LAPACK<int,double> lapack;
+  /// search params for kd tree
+  nanoflann::SearchParams params;
+  /// kd tree to use for nearest neighbor search
+  Teuchos::RCP<kd_tree_2d_t> kd_tree;
 };
 
-/// a kd-tree index:
-typedef KDTreeSingleIndexAdaptor<
-  L2_Simple_Adaptor<DICe::scalar_t, Point_Cloud_2D<DICe::scalar_t> > ,
-  Point_Cloud_2D<DICe::scalar_t>,
-  2 /* dim */
-  > kd_tree_2d_t;
 
 /// point clouds
 template <typename T>
-struct Point_Cloud_3D
-{
+class DICE_LIB_DLL_EXPORT
+Point_Cloud_3D{
+public:
   /// point struct
   struct Point
   {
@@ -135,11 +285,6 @@ struct Point_Cloud_3D
   bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
 };
 
-/// a kd-tree index:
-typedef KDTreeSingleIndexAdaptor<
-  L2_Simple_Adaptor<DICe::scalar_t, Point_Cloud_3D<DICe::scalar_t> > ,
-  Point_Cloud_3D<DICe::scalar_t>,
-  3 /* dim */
-  > kd_tree_3d_t;
+}
 
 #endif
