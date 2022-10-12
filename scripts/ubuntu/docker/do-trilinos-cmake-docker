@@ -1,0 +1,41 @@
+#!/bin/bash
+
+rm -f CMakeCache.txt
+rm -rf CMakeFiles
+EXTRA_ARGS=$@
+cmake \
+    -D CMAKE_INSTALL_PREFIX:FILEPATH=/trilinos-12.4.2-Source/build/install \
+    -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+    -D CMAKE_CXX_FLAGS:STRING="-g -Wall" \
+    -D CMAKE_C_FLAGS:STRING="-g -Wall" \
+    -D CMAKE_FORTRAN_FLAGS:STRING="" \
+    -D Trilinos_ENABLE_Triutils=OFF \
+    -D Trilinos_ENABLE_DEBUG:BOOL=OFF \
+    -D Trilinos_ENABLE_CHECKED_STL:BOOL=OFF \
+    -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF \
+    -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+    -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+    -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+    -D BUILD_SHARED_LIBS:BOOL=OFF \
+    -D DART_TESTING_TIMEOUT:STRING=600 \
+    -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+    -D CMAKE_CXX_COMPILER:FILEPATH=mpicxx \
+    -D CMAKE_C_COMPILER:FILEPATH=mpicc \
+    -D Trilinos_ENABLE_CXX11:BOOL=ON \
+    -D Trilinos_ENABLE_OpenMP:BOOL=ON \
+    -D TPL_ENABLE_BinUtils:BOOL=OFF \
+    -D TPL_ENABLE_BLAS:BOOL=ON \
+    -D TPL_BLAS_LIBRARIES:STRING=/usr/lib/libblas.so.3 \
+    -D TPL_ENABLE_LAPACK:BOOL=ON \
+    -D TPL_LAPACK_LIBRARIES:STRING=/usr/lib/liblapack.so.3 \
+    -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+    -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+    -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+    -D Trilinos_ENABLE_Epetra:BOOL=ON \
+    -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
+    -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+    -D TPL_ENABLE_Netcdf:BOOL=ON \
+    -D Trilinos_ENABLE_Belos:BOOL=ON \
+    \
+    $EXTRA_ARGS \
+../
