@@ -183,6 +183,13 @@ Objective::sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
   return sigma;
 }
 
+scalar_t
+Objective::sigma( Teuchos::RCP<Local_Shape_Function> shape_function) const {
+  scalar_t noise_level = 0.0;
+  return sigma(shape_function,noise_level);
+}
+
+
 void
 Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_function){
 
@@ -290,7 +297,6 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
 //  // field 10: cos of angle between error and ut
 //  schema_->mesh()->get_field(DICe::field_enums::FIELD_10_FS)->global_value(correlation_point_global_id_) = std::sqrt(int_sub_r_approx);
 }
-
 
 void
 Objective::gradSampleMin2D(Teuchos::RCP<Local_Shape_Function> shape_function,
@@ -423,7 +429,8 @@ Objective_ZNSSD::gradient_norm(Teuchos::RCP<Local_Shape_Function> shape_function
 
 Status_Flag
 Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
-  int_t & num_iterations){
+  int_t & num_iterations,
+  const bool debug){
   TEUCHOS_TEST_FOR_EXCEPTION(!subset_->has_gradients(),std::runtime_error,"Error, image gradients have not been computed but are needed here.");
   // TODO catch the case where the initial gamma is good enough (possibly do this at the image level, not subset?):
   int_t N = shape_function->num_params(); // one degree of freedom for each shape function parameter
@@ -476,10 +483,12 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
   DEBUG_MSG(iteration_header.str());
 #endif
 
-  // uncomment to write image of reference subset for each subset
-  //std::stringstream ssr;
-  //ssr << "subset_" << subset_->centroid_x() << "_" << subset_->centroid_y() << "_ref.png";
-  //subset_->write_image(ssr.str(),false);
+  // write image of reference subset for each subset
+  if(debug){
+    std::stringstream ssr;
+    ssr << "subset_" << subset_->centroid_x() << "_" << subset_->centroid_y() << "_ref.png";
+    subset_->write_image(ssr.str(),false);
+  }
 
   int_t solve_it = 0;
   for(;solve_it<=max_solve_its;++solve_it){
@@ -496,10 +505,12 @@ Objective_ZNSSD::computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_func
       return SUBSET_CONSTRUCTION_FAILED;
     }
 
-    // uncomment to write image of deformed subset for each subset at each iteration
-    //std::stringstream ss;
-    //ss << "subset_" << subset_->centroid_x() << "_" << subset_->centroid_y() << "_" << solve_it << ".png";
-    //subset_->write_image(ss.str(),true);
+    // write image of deformed subset for each subset at each iteration
+    if(debug){
+      std::stringstream ss;
+      ss << "subset_" << subset_->centroid_x() << "_" << subset_->centroid_y() << "_" << solve_it << ".png";
+      subset_->write_image(ss.str(),true);
+    }
 
     // compute the mean value of the subsets:
     //scalar_t denomG = 0.0;

@@ -137,6 +137,10 @@ const int_t y):
   scalar_t sigma( Teuchos::RCP<Local_Shape_Function> shape_function,
     scalar_t & noise_level) const;
 
+  /// \brief Uncertainty measure for solution
+  /// \param shape_function [out] pointer to the class that holds the deformation parameter values
+  scalar_t sigma( Teuchos::RCP<Local_Shape_Function> shape_function) const;
+
   /// \brief Measure of the slope of the optimization landscape or how deep the minimum well is
   /// \param shape_function pointer to the class that holds the deformation parameter values
   scalar_t beta( Teuchos::RCP<Local_Shape_Function> shape_function) const;
@@ -145,7 +149,8 @@ const int_t y):
   /// \param shape_function pointer to the class that holds the deformation parameter values
   /// \param num_iterations [out] The number of interations a particular frame took to execute
   virtual Status_Flag computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
-    int_t & num_iterations) = 0;
+    int_t & num_iterations,
+    const bool debug=false) = 0;
 
   /// \brief Simplex based optimization algorithm
   /// \param shape_function pointer to the class that holds the deformation parameter values
@@ -256,7 +261,8 @@ public:
 
   /// See base class documentation
   virtual Status_Flag computeUpdateFast(Teuchos::RCP<Local_Shape_Function> shape_function,
-    int_t & num_iterations);
+    int_t & num_iterations,
+    const bool debug=false);
 
   /// See base class documentation
   using Objective::computeUpdateRobust;
