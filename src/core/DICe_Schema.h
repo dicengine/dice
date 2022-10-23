@@ -691,6 +691,24 @@ public:
   /// WARNING: This is meant only for the TRACKING_ROUTINE where there are only a few subsets to track
   void check_for_blocking_subsets(const int_t subset_global_id);
 
+  /// \brief Function to initialize a subset by marching at the specified step size from the
+  /// values of a neighbor subset. Used for areas that are hard to correlated just based on
+  /// an initial guess of the displacements or where the deformation is changing rapidly in x or y
+  /// \param neighbor_direction which neighbor to use
+  /// \param step the step size of the marching
+  /// \param schema pointer to the the schema with the field values
+  /// \param gamma_tol used for testing the solution
+  /// \param v_tol also use for testing the solution
+  void march_from_neighbor_init(const Direction & neighbor_direction,
+      const scalar_t & step,
+      Teuchos::RCP<Schema> schema,
+      const scalar_t & gamma_tol,
+      const scalar_t & v_tol,
+      cv::Mat & debug_img,
+      const std::string & debug_img_name,
+      const int_t color = 255,
+      const int_t dot_size = 10);
+
   /// \brief Orchestration of how the correlation is conducted.
   /// A correlation routine involves a number of steps. The first is to initialize a guess
   /// for the given subset, followed by actually performing the correlation. There are a number of
@@ -732,7 +750,7 @@ public:
     const int_t num_iterations);
 
   /// Record the solution in the field arrays
-  /// \param obj pointer to an objective class
+  /// \param subset_gid
   /// \param shape_function pointer to a shape function
   /// \param sigma sigma value
   /// \param match match value
@@ -743,7 +761,7 @@ public:
   /// \param active_pixels the number of active pixels for this subset
   /// \param status status flag
   /// \param num_iterations the number of iterations
-  void record_step(Teuchos::RCP<Objective> obj,
+  void record_step(const int_t subset_gid,
     Teuchos::RCP<Local_Shape_Function> shape_function,
     const scalar_t & sigma,
     const scalar_t & match,
@@ -990,6 +1008,25 @@ public:
   std::string initial_condition_file()const{
     return initial_condition_file_;
   }
+
+  /// a method to evaluate if the shape function parameters lead to a reasonable mapping
+  /// also returns the computed values of sigma and gamma
+  /// \param shape_function storage for the shape function parameters
+  /// \param obj pointer to the objective object
+  /// \param gamma_tol the tolerance for the similarity index
+  /// \param u_tol
+  /// \param v_tol
+  /// \param t_tol tolerances for the magnitude of these variables
+  bool shape_function_params_valid(Teuchos::RCP<Local_Shape_Function> shape_function,
+      Teuchos::RCP<Objective> obj,
+      const scalar_t & gamma_tol,
+      const scalar_t & u_tol,
+      const scalar_t & v_tol,
+      const scalar_t & t_tol,
+      const Status_Flag corr_status,
+      scalar_t & return_gamma,
+      scalar_t & return_sigma)const;
+
 
   /// estimate the error in the displacement resolution and strain
   /// \param correlation_params parameters to apply to the resolution estimation

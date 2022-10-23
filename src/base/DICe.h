@@ -593,6 +593,16 @@ const static char * correlationRoutineStrings[] = {
   "CORRELATION_ROUTINE_NOT_APPLICABLE"
 };
 
+enum Direction{
+  // 0
+  LEFT=0,
+  // 1
+  RIGHT,
+  // 2
+  UP,
+  // 3
+  DOWN
+};
 
 
 /// Status flags
