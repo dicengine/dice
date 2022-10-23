@@ -93,6 +93,18 @@ public:
     DEBUG_MSG(dbg_msg.str());
   }
 
+  /// returns the field spec associated with this i index of the parameters
+  /// \param i the requested index
+  DICe::field_enums::Field_Spec field_spec(const size_t i)const{
+    assert(i<spec_map_.size());
+    std::map<DICe::field_enums::Field_Spec,size_t>::const_iterator it = spec_map_.begin();
+    const std::map<DICe::field_enums::Field_Spec,size_t>::const_iterator it_end = spec_map_.end();
+    for(;it!=it_end;++it)
+      if(it->second==i)
+        return it->first;
+    return DICe::field_enums::NO_SUCH_FS;
+  }
+
   /// save off the parameters to the correct fields
   /// \param schema the schema that has the mesh with associated fields
   /// \param subset_gid the global id of the subset to save the fields for
