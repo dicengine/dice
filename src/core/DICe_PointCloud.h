@@ -76,6 +76,18 @@ typedef KDTreeSingleIndexAdaptor<
   3 /* dim */
   > kd_tree_3d_t;
 
+template <typename T>
+class DICE_LIB_DLL_EXPORT
+Point_Cloud_6D;
+
+/// a kd-tree index:
+typedef KDTreeSingleIndexAdaptor<
+  L2_Simple_Adaptor<scalar_t, Point_Cloud_6D<scalar_t> > ,
+  Point_Cloud_6D<scalar_t>,
+  6 /* dim */
+  > kd_tree_6d_t;
+
+
 /// point clouds
 template <typename T>
 class DICE_LIB_DLL_EXPORT
@@ -303,6 +315,90 @@ public:
   ///   Look at bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
   template <class BBOX>
   bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
+};
+
+
+/// point clouds
+template <typename T>
+class DICE_LIB_DLL_EXPORT
+Point_Cloud_6D{
+public:
+  /// point struct
+  struct Point
+  {
+    /// data x
+    T x;
+    /// data y
+    T y;
+    /// data z
+    T z;
+    /// data p
+    T p;
+    /// data q
+    T q;
+    /// data r
+    T r;
+  };
+  /// constructor with point cloud points passed in
+  /// \param in vector of 6 dof vectors to define the coordinates of the point cloud
+  Point_Cloud_6D(const std::vector<std::vector<T> > & in){
+    params.sorted = true; // sort by distance in ascending order
+    pts.resize(in.size());
+    assert(in.size()>0);
+    assert(in[0].size()==6);
+    for(size_t i=0;i<in.size();++i){
+      pts[i].x = in[i][0];
+      pts[i].y = in[i][1];
+      pts[i].z = in[i][2];
+      pts[i].p = in[i][3];
+      pts[i].q = in[i][4];
+      pts[i].r = in[i][5];
+    }
+    kd_tree = Teuchos::rcp(new kd_tree_6d_t(6 /*dim*/, *this, nanoflann::KDTreeSingleIndexAdaptorParams(10)));
+    kd_tree->buildIndex();
+  }
+
+  /// vector of points
+  std::vector<Point>  pts;
+  /// Must return the number of data points
+  inline size_t kdtree_get_point_count() const { return pts.size(); }
+  /// Returns the distance between the vector "p1[0:size-1]" and the data point with index "idx_p2" stored in the class:
+  inline T kdtree_distance(const T *p1, const size_t idx_p2,size_t /*size*/) const
+  {
+    const T d0=p1[0]-pts[idx_p2].x;
+    const T d1=p1[1]-pts[idx_p2].y;
+    const T d2=p1[2]-pts[idx_p2].z;
+    const T d3=p1[3]-pts[idx_p2].p;
+    const T d4=p1[4]-pts[idx_p2].q;
+    const T d5=p1[5]-pts[idx_p2].r;
+    return d0*d0+d1*d1+d2*d2+d3*d3+d4*d4+d5*d5;
+  }
+  /// Returns the dim'th component of the idx'th point in the class:
+  /// Since this is inlined and the "dim" argument is typically an immediate value, the
+  ///  "if/else's" are actually solved at compile time.
+  inline T kdtree_get_pt(const size_t idx, int dim) const
+  {
+    if (dim==0) return pts[idx].x;
+    else if(dim==1) return pts[idx].y;
+    else if(dim==1) return pts[idx].z;
+    else if(dim==1) return pts[idx].p;
+    else if(dim==1) return pts[idx].q;
+    else return pts[idx].r;
+  }
+  /// Optional bounding-box computation: return false to default to a standard bbox computation loop.
+  ///   Return true if the BBOX was already computed by the class and returned in "bb" so it can be avoided to redo it again.
+  ///   Look at bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
+  template <class BBOX>
+  bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
+
+  /// return a pointer to the kd tree
+  Teuchos::RCP<kd_tree_6d_t> get_kd_tree()const{return kd_tree;}
+
+  /// search params for kd tree
+  nanoflann::SearchParams params;
+  /// kd tree to use for nearest neighbor search
+  Teuchos::RCP<kd_tree_6d_t> kd_tree;
+
 };
 
 }
