@@ -2970,6 +2970,7 @@ Schema::march_from_neighbor_init(const Direction & neighbor_direction,
     Teuchos::RCP<Schema> schema,
     const scalar_t & gamma_tol,
     const scalar_t & v_tol,
+    std::map<std::pair<int_t,int_t>,std::vector<scalar_t> > & rectified_points,
     cv::Mat & debug_img,
     const std::string & debug_img_name,
     const int_t color,
@@ -3043,6 +3044,11 @@ Schema::march_from_neighbor_init(const Direction & neighbor_direction,
           DEBUG_MSG("Schema::march_from_neighbor_init(): failed marching step skipping this intermediate step ");
           for(int_t i=0;i<sf->num_params();++i)
             (*sf)(i) = save_params[i];
+        }else{
+          std::vector<scalar_t> params(sf->num_params(),0.0);
+          for(int_t i=0;i<sf->num_params();++i)
+            params[i] = (*sf)(i);
+          rectified_points.insert(std::make_pair(std::make_pair((int_t)subset_x,(int_t)subset_y),params)); // cast coords to ints to make comparison easier
         }
       }
     }
@@ -3055,6 +3061,10 @@ Schema::march_from_neighbor_init(const Direction & neighbor_direction,
       schema->record_step(schema->subset_global_id(local_id),sf,cross_sigma,1,cross_gamma,0.0,0.0,0.0,0,corr_status,num_iterations);
       cv::Point pt1(my_x,my_y);
       cv::circle(debug_img, pt1, dot_size, cv::Scalar(color),3);
+      std::vector<scalar_t> params(sf->num_params(),0.0);
+      for(int_t i=0;i<sf->num_params();++i)
+        params[i] = (*sf)(i);
+      rectified_points.insert(std::make_pair(std::make_pair((int_t)my_x,(int_t)my_y),params));
     }else{
       DEBUG_MSG("Schema::march_from_neighbor_init(): failed correlation at local id");
       schema->record_failed_step(schema->subset_global_id(local_id),corr_status,num_iterations);
@@ -3244,6 +3254,9 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       }
     } // end subset sssig check loop
 
+    // master set of points and shape function parameters
+    std::map<std::pair<int_t,int_t>,std::vector<scalar_t> > rectified_points;
+
     // loop over the whole domain attempting to initialize the subsets based on a least squares fit of feature matched points
 
     const int_t num_loops = 3;
@@ -3267,6 +3280,10 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
           good_u.push_back(rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS));
           cv::Point pt1(x,y);
           cv::circle(left_img_rmp, pt1, 10, cv::Scalar(0),3);
+          std::vector<scalar_t> params(sf->num_params(),0.0);
+          for(int_t i=0;i<sf->num_params();++i)
+            params[i] = (*sf)(i);
+          rectified_points.insert(std::make_pair(std::make_pair((int_t)x,(int_t)y),params));
         }else{
           rect_schema->record_failed_step(obj->correlation_point_global_id(),corr_status,num_iterations);
           continue;
@@ -3280,25 +3297,45 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 
     // top down marching pixel by pixel from neighbor
 
-    const scalar_t marching_step_size = 2.0;
-    march_from_neighbor_init(UP,marching_step_size,rect_schema,gamma_tol,v_tol,left_img_rmp,"neigh_march_top.png",255,10);
-    march_from_neighbor_init(LEFT,marching_step_size,rect_schema,gamma_tol,v_tol,left_img_rmp,"neigh_march_left.png",225,10);
-    march_from_neighbor_init(RIGHT,marching_step_size,rect_schema,gamma_tol,v_tol,left_img_rmp,"neigh_march_right.png",200,10);
-    march_from_neighbor_init(DOWN,marching_step_size,rect_schema,gamma_tol,v_tol,left_img_rmp,"neigh_march_bottom.png",175,10);
-    march_from_neighbor_init(UP,marching_step_size,rect_schema,gamma_tol,v_tol,left_img_rmp,"neigh_march_top_2.png",255,8);
-    march_from_neighbor_init(RIGHT,marching_step_size,rect_schema,gamma_tol,v_tol,left_img_rmp,"neigh_march_right_2.png",225,8);
+    const scalar_t marching_step_size = 2.0; // FIXME should be integer values?
+    march_from_neighbor_init(UP,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_top.png",255,10);
+    march_from_neighbor_init(LEFT,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_left.png",225,10);
+    march_from_neighbor_init(RIGHT,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_right.png",200,10);
+    march_from_neighbor_init(DOWN,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_bottom.png",175,10);
+    march_from_neighbor_init(UP,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_top_2.png",255,8);
+    march_from_neighbor_init(RIGHT,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_right_2.png",225,8);
 
-    std::FILE * disparityFilePtr = fopen("final_disparity.txt","w");
-    for(int_t local_id = 0; local_id < rect_schema->local_num_subsets(); ++local_id){
-      if(rect_schema->local_field_value(local_id, SIGMA_FS)<0.0) continue;
-      fprintf(disparityFilePtr,"%f %f %f %f %f\n",
-          rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS),
-          rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS),
-          rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS),
-          rect_schema->local_field_value(local_id,ITERATIONS_FS),
-          rect_schema->local_field_value(local_id,GAMMA_FS));
-    }
-    fclose(disparityFilePtr);
+    // keep these commented out lines around for debugging if needed, then delete later
+    //std::FILE * disparityFilePtr = fopen("final_disparity.txt","w");
+    //std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_it;
+    //std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_begin = rectified_points.begin();
+    //std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_end   = rectified_points.end();
+    //for(map_it=map_begin;map_it!=map_end;++map_it){
+    //  assert(map_it->second.size()>0);
+    //  fprintf(disparityFilePtr,"%i %i %f\n",map_it->first.first,map_it->first.second,map_it->second[0]);
+    //}
+    //fclose(disparityFilePtr);
+    //std::FILE * disparityFilePtr = fopen("final_disparity.txt","w");
+    //for(int_t local_id = 0; local_id < rect_schema->local_num_subsets(); ++local_id){
+    //  if(rect_schema->local_field_value(local_id, SIGMA_FS)<0.0) continue;
+    //  fprintf(disparityFilePtr,"%f %f %f %f %f\n",
+    //      rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS),
+    //      rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS),
+    //      rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS),
+    //      rect_schema->local_field_value(local_id,ITERATIONS_FS),
+    //      rect_schema->local_field_value(local_id,GAMMA_FS));
+    //}
+    //fclose(disparityFilePtr);
+
+
+    // create a new point cloud with all the rectified points (and none of the feature matched points which were in the last point cloud)
+
+
+    // rectify the locations of the subset coordinates
+
+
+
+
 
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Implementation not completed yet");
 

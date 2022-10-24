@@ -704,6 +704,7 @@ public:
       Teuchos::RCP<Schema> schema,
       const scalar_t & gamma_tol,
       const scalar_t & v_tol,
+      std::map<std::pair<int_t,int_t>,std::vector<scalar_t> > & rectified_points,
       cv::Mat & debug_img,
       const std::string & debug_img_name,
       const int_t color = 255,
