@@ -1,0 +1,89 @@
+<ParameterList>
+<!-- DICe formatted camera system file -->
+<!-- xml_file_format identifies that this is an xml camera system file denotes that this file is a DICe XML formatted camera system file -->
+<Parameter name="xml_file_format" type="string" value="DICe_xml_camera_system_file" />  
+<!-- type of 3D system valid field values are:  GENERIC_SYSTEM OPENCV VIC3D DICE -->
+<Parameter name="system_type_3D" type="string" value="OPENCV" />  
+<Parameter name="extrinsics_relative_camera_to_camera" type="bool" value="true" />  
+<Parameter name="avg_epipolar_error" type="double" value="1.429949060812e-01" />  
+<!-- camera intrinsic parameters (zero valued parameters don't need to be specified) -->
+<!-- the file supports up to (max_num_cameras_allowed_) cameras, 0...max_num -->
+<!-- each camera is a seperate sublist of parameters -->
+<!-- the sublist must be named CAMERA <#> with # the integer id of the camera starting at 0 -->
+<!-- valid camera intrinsic parameter field names are:  CX CY FX FY FS K1 K2 K3 K4 K5 K6 P1 P2 S1 S2 S3 S4 T1 T2 -->
+<!-- CX,CY-image center (pix), FX,FY-pin hole distances (pix), FS-skew (deg) -->
+<!-- K1-K6-lens distortion coefficients, P1-P2-tangential distortion(openCV), S1-S4 thin prism distortion(openCV), T1,T2-Scheimpfug correction (openCV) -->
+<!-- be aware that openCV gives the values in the following order: (K1,K2,P1,P2[,K3[,K4,K5,K6[,S1,S2,S3,S4[,TX,TY]]]]) -->
+<!-- valid values for the LENS_DISTORTION_MODEL are:  -->
+<!-- NONE no distortion model -->
+<!-- OPENCV_DIS uses the model defined in openCV 3.4.1 -->
+<!-- VIC3D_DIS uses the model defined for VIC3D -->
+<!-- K1R1_K2R2_K3R3 -> K1*R + K2*R^2 + K3*R^3 -->
+<!-- K1R2_K2R4_K3R6 -> K1*R^2 + K2*R^4 + K3*R^6 -->
+<!-- K1R3_K2R5_K3R7 -> K1*R^3 + K2*R^5 + K3*R^7 -->
+<!-- camera extrinsic parameters (zero valued parameters don't need to be specified) -->
+<!-- extrinsic translations TX TY and TZ can be specified as separate parameters -->
+<!-- extrinsic rotations can be specified through a rotation matrix R, or the three euler angles, but not both -->
+<!-- if no matrix or euler angles are given the rotation matrix is set to the identity matrix -->
+<!-- additional camera fields: -->
+<!-- CAMERA_ID: unique camera descripter, if not supplied CAMERA {#} is used -->
+<!-- IMAGE_HEIGHT_WIDTH {h, w} -->
+<!-- PIXEL_DEPTH -->
+<!-- LENS -->
+<!-- COMMENTS -->
+<!-- any parameter with a value of 0 may simply be omitted from the calibration file -->
+<ParameterList name="CAMERA 0">
+<Parameter name="CAMERA_ID" type="string" value="" />  
+<Parameter name="CX" type="double" value="1.209617441992e+03" />  
+<Parameter name="CY" type="double" value="1.038214648686e+03" />  
+<Parameter name="FX" type="double" value="4.725040474193e+03" />  
+<Parameter name="FY" type="double" value="4.722291699907e+03" />  
+<Parameter name="K1" type="double" value="-2.361956054191e-01" />  
+<Parameter name="K2" type="double" value="-9.858048851165e-02" />  
+<Parameter name="K3" type="double" value="-3.652319258538e-01" />  
+<Parameter name="LENS_DISTORTION_MODEL" type="string" value="OPENCV_LENS_DISTORTION" />  
+<Parameter name="TX" type="double" value="0.000000000000e+00" />  
+<Parameter name="TY" type="double" value="0.000000000000e+00" />  
+<Parameter name="TZ" type="double" value="0.000000000000e+00" />  
+<!-- 3x3 camera rotation matrix (world to cam transformation) -->
+<!-- this is a 3x3 matrix that combined with TX, TY and TZ transform world coodinates to this camera's coordinates -->
+<ParameterList name="rotation_3x3_matrix">
+<Parameter name="ROW 0" type="string" value="{ 1.000000000000e+00, 0.000000000000e+00, 0.000000000000e+00 }" />  
+<!-- R11 R12 R13 -->
+<Parameter name="ROW 1" type="string" value="{ 0.000000000000e+00, 1.000000000000e+00, 0.000000000000e+00 }" />  
+<!-- R21 R22 R23 -->
+<Parameter name="ROW 2" type="string" value="{ 0.000000000000e+00, 0.000000000000e+00, 1.000000000000e+00 }" />  
+<!-- R31 R32 R33 -->
+</ParameterList>
+<!-- Euler angles: ALPHA 0 BETA -0 GAMMA 0 (radians) -->
+<Parameter name="IMAGE_HEIGHT_WIDTH" type="string" value="{ 2048, 2448 }" />  
+<Parameter name="PIXEL_DEPTH" type="int" value="-1" />  
+</ParameterList>
+<ParameterList name="CAMERA 1">
+<Parameter name="CAMERA_ID" type="string" value="" />  
+<Parameter name="CX" type="double" value="1.269624567829e+03" />  
+<Parameter name="CY" type="double" value="1.034940199070e+03" />  
+<Parameter name="FX" type="double" value="4.731032509368e+03" />  
+<Parameter name="FY" type="double" value="4.726855393937e+03" />  
+<Parameter name="K1" type="double" value="-2.550273867639e-01" />  
+<Parameter name="K2" type="double" value="4.343318583650e-01" />  
+<Parameter name="K3" type="double" value="-4.941856327257e+00" />  
+<Parameter name="LENS_DISTORTION_MODEL" type="string" value="OPENCV_LENS_DISTORTION" />  
+<Parameter name="TX" type="double" value="-1.745035486559e+02" />  
+<Parameter name="TY" type="double" value="-7.918143136883e-02" />  
+<Parameter name="TZ" type="double" value="5.299233447840e+01" />  
+<!-- 3x3 camera rotation matrix (world to cam transformation) -->
+<!-- this is a 3x3 matrix that combined with TX, TY and TZ transform world coodinates to this camera's coordinates -->
+<ParameterList name="rotation_3x3_matrix">
+<Parameter name="ROW 0" type="string" value="{ 8.198619486301e-01, 3.363391720778e-03, 5.725513713062e-01 }" />  
+<!-- R11 R12 R13 -->
+<Parameter name="ROW 1" type="string" value="{ 9.711264704882e-04, 9.999731391850e-01, -7.264834609175e-03 }" />  
+<!-- R21 R22 R23 -->
+<Parameter name="ROW 2" type="string" value="{ -5.725604265944e-01, 6.512181251543e-03, 8.198366601912e-01 }" />  
+<!-- R31 R32 R33 -->
+</ParameterList>
+<!-- Euler angles: ALPHA 0.0079431 BETA 0.609625 GAMMA 0.0011845 (radians) -->
+<Parameter name="IMAGE_HEIGHT_WIDTH" type="string" value="{ 2048, 2448 }" />  
+<Parameter name="PIXEL_DEPTH" type="int" value="-1" />  
+</ParameterList>
+</ParameterList>

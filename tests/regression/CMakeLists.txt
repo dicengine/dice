@@ -85,6 +85,7 @@ SET(GLOBAL_REGRESSION_TESTS
   stereo_auto
   stereo_satellite
   stereo_dogbone
+  stereo_rectified
   stereo_dogbone_incremental
   )
 IF(DICE_USE_DOUBLE)
