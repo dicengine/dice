@@ -123,6 +123,22 @@ public:
     kd_tree->buildIndex();
     tree_requires_update = false;
   }
+  /// convenience method for building a point cloud from a map of integer pixel locations
+  Point_Cloud_2D(const std::map<std::pair<int_t,int_t>,std::vector<scalar_t> > & points):Point_Cloud_2D(){
+    pts.resize(points.size());
+    int_t i = 0;
+    std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_it;
+    std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_begin = points.begin();
+    std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_end   = points.end();
+    for(map_it=map_begin;map_it!=map_end;++map_it){
+      pts[i].x = map_it->first.first;
+      pts[i].y = map_it->first.second;
+      i++;
+    }
+    kd_tree = Teuchos::rcp(new kd_tree_2d_t(2, *this, nanoflann::KDTreeSingleIndexAdaptorParams(10)));
+    kd_tree->buildIndex();
+    tree_requires_update = false;
+  }
   /// function to add a point to the point cloud
   /// since the points are changed the update flag is set since the kd tree will have to be rebuilt
   void add_point(const T & x, const T & y){
@@ -135,14 +151,20 @@ public:
   /// method to perform a least squares fit of surrounding points
   /// \param x x coordinate of point of interest
   /// \param y y coordinate of point of interest
-  /// \param num_neigh the number of neighbors to use in the fit
+  /// \param neigh_size the number of neighbors to use or the neighbor radius. If the neigh_size is an integer value it is assumed to be a knn search
   /// \param data the vector of vectors of values to fit, must be the same dimension as the point cloud points, each column of the vector gets fit
   /// \param result the array holding the fit value for each column
-  void knn_least_squares(const T & x, const T & y, const int num_neigh, const std::vector<std::vector<T>> & data, std::vector<T> & result){
+  /// \param force_radius force a radius search even if the input neigh_size is an integer value
+  void least_squares_fit(const T & x,
+      const T & y,
+      const scalar_t & neigh_size,
+      const std::vector<std::vector<T>> & data,
+      std::vector<T> & result,
+      const bool force_radius=false){
     // make sure data is the right size
     TEUCHOS_TEST_FOR_EXCEPTION(data.size()<1,std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(data.size()!=result.size(),std::runtime_error,"");
-    TEUCHOS_TEST_FOR_EXCEPTION(data[0].size()!=pts.size(),std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(data[0].size()!=result.size(),std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(data.size()!=pts.size(),std::runtime_error,"");
     for(size_t i=0;i<result.size();++i)
       result[i] =0.0;
 
@@ -150,13 +172,32 @@ public:
       kd_tree = Teuchos::rcp(new kd_tree_2d_t(2, *this, nanoflann::KDTreeSingleIndexAdaptorParams(10)));
       kd_tree->buildIndex();
     }
-
     T query_pt[2];
-    std::vector<size_t> ret_index(num_neigh);
-    std::vector<T> out_dist_sqr(num_neigh);
     query_pt[0] = x;
     query_pt[1] = y;
-    kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+    int_t num_neigh = 0;
+    std::vector<size_t> ret_index;
+    if(std::floor(neigh_size)!=neigh_size||force_radius){ // assume it's a radius search
+      std::vector<std::pair<size_t,scalar_t> > ret_matches;
+      const scalar_t neigh_rad_2 = neigh_size*neigh_size;
+      kd_tree->radiusSearch(&query_pt[0],neigh_rad_2,ret_matches,params);
+      num_neigh = ret_matches.size();
+      ret_index.resize(num_neigh);
+      for(int_t i=0;i<num_neigh;++i)
+        ret_index[i] = ret_matches[i].first;
+    }else{
+      num_neigh = std::floor(neigh_size);
+      ret_index.resize(num_neigh);
+      std::vector<T> out_dist_sqr(num_neigh);
+      kd_tree->knnSearch(&query_pt[0], num_neigh, &ret_index[0], &out_dist_sqr[0]);
+    }
+
+    // check if enough neigbors were found
+    if(num_neigh<3){
+      DEBUG_MSG("least_squares_fit(): not enough neighbors to fit");
+      return;
+    }
+
     Teuchos::SerialDenseMatrix<int,double> X_t(N,num_neigh, true);
     Teuchos::SerialDenseMatrix<int,double> X_t_X(N,N,true);
     for(int i=0;i<num_neigh;++i){
@@ -175,10 +216,10 @@ public:
     lapack.GETRF(X_t_X.numRows(),X_t_X.numCols(),X_t_X.values(),X_t_X.numRows(),IPIV,&INFO);
     lapack.GETRI(X_t_X.numRows(),X_t_X.values(),X_t_X.numRows(),IPIV,WORK,LWORK,&INFO);
 
-    for(size_t f=0;f<data.size();++f){
+    for(size_t f=0;f<data[0].size();++f){
       Teuchos::ArrayRCP<double> neigh_data(num_neigh,0.0);
       for(int j=0;j<num_neigh;++j){
-        neigh_data[j] = data[f][ret_index[j]];
+        neigh_data[j] = data[ret_index[j]][f];
       }
       // compute X^T*u
       Teuchos::ArrayRCP<double> X_t_u(N,0.0);
@@ -191,20 +232,23 @@ public:
       for(int k=0;k<N;++k)
         for(int j=0;j<N;++j)
           coeffs[k] += X_t_X(k,j)*X_t_u[j];
-
       result[f] = coeffs[0];
     }
   }
   /// method to perform a least squares fit of surrounding points
+  /// convenience method for a vector of d=1
   /// \param x x coordinate of point of interest
   /// \param y y coordinate of point of interest
   /// \param num_neigh the number of neighbors to use in the fit
   /// \param data the vector of values to fit, must be the same dimension as the point cloud points
-  T knn_least_squares(const T & x, const T & y, const int num_neigh, const std::vector<T> & data){
+  T least_squares_fit(const T & x, const T & y,
+      const scalar_t & neigh_size,
+      const std::vector<std::vector<T> > & data,
+      const bool force_radius = false){
+    TEUCHOS_TEST_FOR_EXCEPTION(data.size()<1,std::runtime_error,"");
+    TEUCHOS_TEST_FOR_EXCEPTION(data[0].size()!=1,std::runtime_error,"");
     std::vector<T> result(1,0.0);
-    std::vector<std::vector<T> > data_v(1);
-    data_v[0] = data;
-    knn_least_squares(x,y,num_neigh,data_v,result);
+    least_squares_fit(x,y,neigh_size,data,result,force_radius);
     return result[0];
   }
   /// point struct
