@@ -3026,7 +3026,7 @@ Schema::march_from_neighbor_init(const Direction & neighbor_direction,
     scalar_t subset_x = neigh_x;
     scalar_t subset_y = neigh_y;
     scalar_t cross_gamma = 0.0, cross_sigma = 0.0;
-    Status_Flag corr_status;
+    Status_Flag corr_status = CORRELATION_FAILED;
     Teuchos::RCP<Objective> obj;
     std::vector<scalar_t> save_params(sf->num_params(),0.0);
     for(int_t ix=0;ix<=num_steps_x;++ix){
@@ -3200,13 +3200,13 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 	  // do a feature matching on the rectified images
 
     float feature_epi_dist_tol = 0.5f;
-    float epi_dist_tol = 0.5f;
+    //float epi_dist_tol = 0.5f;
     if(tri->avg_epipolar_error()!=0.0){
       feature_epi_dist_tol = 3.0*tri->avg_epipolar_error();
-      epi_dist_tol = 3.0*tri->avg_epipolar_error();
+      //epi_dist_tol = 3.0*tri->avg_epipolar_error();
     }
     DEBUG_MSG("Schema::initialize_cross_correlation(): feature epi dist tol: " << feature_epi_dist_tol);
-    DEBUG_MSG("Schema::initialize_cross_correlation(): epi dist tol: " << epi_dist_tol);
+    //DEBUG_MSG("Schema::initialize_cross_correlation(): epi dist tol: " << epi_dist_tol);
     Teuchos::RCP<DICe::Image> left_image = Teuchos::rcp(new Image(outname_left.c_str(),imgParams));
     Teuchos::RCP<DICe::Image> right_image = Teuchos::rcp(new Image(outname_right.c_str(),imgParams));
 

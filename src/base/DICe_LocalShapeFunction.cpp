@@ -406,7 +406,7 @@ Affine_Shape_Function::high_order_terms(const scalar_t & x,
   const bool use_ref_grads){
   assert((int_t)high_order_terms.size()==4);
 
-  static scalar_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0,delTheta=0.0,delEx=0.0,delEy=0.0,delGxy=0.0;
+  static scalar_t dx=0.0,dy=0.0,Dx=0.0,Dy=0.0;
   static scalar_t Gx=0.0,Gy=0.0;
   static scalar_t theta=0.0,dudx=0.0,dvdy=0.0,gxy=0.0,cosTheta=0.0,sinTheta=0.0;
   theta = has_rotz_ ? parameters_[rotz_ind_] : 0.0;
@@ -422,12 +422,6 @@ Affine_Shape_Function::high_order_terms(const scalar_t & x,
   Dy = (1.0+dvdy)*(dy) + gxy*(dx);
   Gx = use_ref_grads ? cosTheta*gx - sinTheta*gy : gx;
   Gy = use_ref_grads ? sinTheta*gx + cosTheta*gy : gy;
-
-  delTheta = Gx*(-sinTheta*Dx - cosTheta*Dy) + Gy*(cosTheta*Dx - sinTheta*Dy);
-  //deldelTheta = Gx*(-cosTheta*Dx + sinTheta*Dy) + Gy*(-sinTheta*Dx - cosTheta*Dy);
-  delEx = Gx*dx*cosTheta + Gy*dx*sinTheta;
-  delEy = -Gx*dy*sinTheta + Gy*dy*cosTheta;
-  delGxy = Gx*(cosTheta*dy - sinTheta*dx) + Gy*(sinTheta*dy + cosTheta*dx);
 
   high_order_terms[0] = Gx*(sinTheta*Dy - cosTheta*Dx) + Gy*(-1.0*sinTheta*Dx - cosTheta*Dy);
   high_order_terms[1] = Gy*cosTheta*dx - Gx*sinTheta*dx;
