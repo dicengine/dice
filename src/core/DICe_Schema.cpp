@@ -1473,8 +1473,9 @@ Schema::execute_cross_correlation(){
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Error, cross-correlation has not been implemented for global DIC");
     return 0;
   }
-  if(cross_initialization_method_==USE_SPACE_FILLING_ITERATIONS){
-    DEBUG_MSG("Schema::execute_cross_correlation(): skipping cross-correlation since initialization method is USE_SPACE_FILLING_ITERATIONS");
+  if(cross_initialization_method_==USE_SPACE_FILLING_ITERATIONS||cross_initialization_method_==USE_RECTIFIED_CORRESPONDENCES){
+    DEBUG_MSG("Schema::execute_cross_correlation(): skipping cross-correlation since initialization "
+        "method is USE_SPACE_FILLING_ITERATIONS or USE_RECTIFIED_CORRESPONDENCES");
     return 0;
   }
 
@@ -3073,6 +3074,51 @@ Schema::march_from_neighbor_init(const Direction & neighbor_direction,
   cv::imwrite(debug_img_name,debug_img);
 }
 
+void
+Schema::undistort_and_rectify(std::vector<cv::Point2f> & in,
+    std::vector<cv::Point2f> & out,
+    cv::Mat & M1,
+    cv::Mat & D1,
+    cv::Mat & R1,
+    cv::Mat & P1)const{
+  cv::undistortPoints(in,out,M1,D1,R1,P1);
+}
+
+void
+Schema::unrectify_and_distort(std::vector<cv::Point2f> & in,
+    std::vector<cv::Point2f> & out,
+    cv::Mat & M1,
+    cv::Mat & D1,
+    cv::Mat & R1,
+    cv::Mat & P1)const{
+
+    // Create mats for the reversing the image rectification, we need three of them: the inverse of the rectification
+    // rotation matrix from stereoRectify R1, and two others to 'swap' the P1 and M1 projections that happen in undistortPoints()
+    // P1_prime is the rotation matrix sub-portion of the projection matrix and M1_prime converts the rectification
+    // rotation matrix into a projection matrix with no translation. Note this only works if the output of stereoRectify has no translation,
+    // i.e. the last column of P1 is zeros which can be easily verified.
+    assert(cv::norm(P1(cv::Rect(3,0,1,3))==0.0));
+    // create a 3x3 shallow copy of the rotation matrix portion of the projection P1
+    cv::Mat P1_prime = P1(cv::Rect(0,0,3,3));
+    // create a 3x4 projection matrix with the rotation portion of the rectification rotation matrix R1
+    cv::Mat M1_prime = cv::Mat::zeros(3,4,CV_64F);
+    M1.copyTo(M1_prime(cv::Rect(0,0,3,3)));
+
+    // reverse the image rectification transformation (result will still be undistorted)
+    std::vector<cv::Point2f> obs_undist_points;
+    cv::undistortPoints(in,obs_undist_points,P1_prime,cv::Mat(),R1.inv(),M1_prime);
+    // convert the image coordinates into sensor or normalized or ideal coordinates (again, still undistorted)
+    std::vector<cv::Point2f> ideal_undist_points;
+    cv::undistortPoints(obs_undist_points,ideal_undist_points,M1,cv::Mat());
+    // artificially project the ideal 2d points to a plane in world coordinates using a linear camera model (z=1)
+    std::vector<cv::Point3f> world_undist_points;
+    for (cv::Point2f pt : ideal_undist_points)world_undist_points.push_back(cv::Point3f(pt.x,pt.y,1));
+    // add the distortions back in to get the original coordinates
+    cv::Mat rvec = cv::Mat::zeros(3,1,CV_64FC1); // dummy zero rotation vec (so that only distortions are applied)
+    cv::Mat tvec = cv::Mat::zeros(3,1,CV_64FC1); // dummy zero translation vec
+    cv::projectPoints(world_undist_points,rvec,tvec,M1,D1,out);
+}
+
 int_t
 Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
   const Teuchos::RCP<Teuchos::ParameterList> & input_params){
@@ -3127,6 +3173,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
 	  // create rectified images and store them in the .dice folder
 	  cv::Mat left_img = cv::imread(left_image_string, cv::ImreadModes::IMREAD_GRAYSCALE);
 	  cv::Mat right_img = cv::imread(right_image_string, cv::ImreadModes::IMREAD_GRAYSCALE);
+    set_ref_image(left_image_string); // call this once to get the prev img initialized to the right image for later
 	  cv::Mat M1 = tri->camera_matrix(0);
 	  cv::Mat M2 = tri->camera_matrix(1);
 	  cv::Mat D1 = tri->distortion_matrix(0);
@@ -3166,7 +3213,8 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     DEBUG_MSG("Schema::initialize_cross_correlation(): begin matching features on processor 0");
     float feature_tol = 0.005f;
     std::vector<scalar_t> left_x, right_x, left_y, right_y;
-    std::vector<scalar_t> good_left_x, good_right_x, good_left_y, good_right_y, good_u;
+    std::vector<scalar_t> good_left_x, good_right_x, good_left_y, good_right_y;
+    std::vector<std::vector<scalar_t> > good_u;
     match_features(left_image,right_image,left_x,left_y,right_x,right_y,feature_tol,".dice/fm_rectified_corr_0p005.png");
     if(left_x.size() < 10){
       DEBUG_MSG("Schema::initialize_cross_correlation(): initial attempt failed with tol = 0.005f, setting to 0.001f and trying again.");
@@ -3197,7 +3245,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
         good_left_y.push_back(left_y[i]);
         good_right_x.push_back(right_x[i]);
         good_right_y.push_back(right_y[i]);
-        good_u.push_back(right_x[i] - left_x[i]);
+        good_u.push_back(std::vector<scalar_t>(1,right_x[i] - left_x[i]));
       }
     }
     DEBUG_MSG("Schema::initialize_cross_correlation(): num good matches: " << good_left_x.size());
@@ -3255,11 +3303,11 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     } // end subset sssig check loop
 
     // master set of points and shape function parameters
-    std::map<std::pair<int_t,int_t>,std::vector<scalar_t> > rectified_points;
+    std::map<std::pair<int_t,int_t>,std::vector<scalar_t> > converged_points; // using a map so that multiple points don't get created in the same location
 
     // loop over the whole domain attempting to initialize the subsets based on a least squares fit of feature matched points
 
-    const int_t num_loops = 3;
+    const int_t num_loops = 3; // TODO explore using less iterations
     for(int_t loop=0;loop<num_loops; ++loop){
 
       for(int_t local_id=0;local_id<rect_schema->local_num_subsets();++local_id){
@@ -3267,7 +3315,7 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
         if(rect_schema->local_field_value(local_id,SIGMA_FS) > 0.0) continue; // positive sigma means it converged in a previous step
         const scalar_t x = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS);
         const scalar_t y = rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
-        const scalar_t init_u = point_cloud.knn_least_squares(x,y,num_neigh, good_u);
+        const scalar_t init_u = point_cloud.least_squares_fit(x,y,num_neigh,good_u);
         DEBUG_MSG("Schema::initialize_cross_correlation(): initial guess for subset " << local_id << " at "  << x <<  " " << y << " is " << init_u);
         sf->clear();
         sf->insert_motion(init_u,0.0);
@@ -3277,71 +3325,120 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
         if(shape_function_params_valid(sf,obj,gamma_tol,-1.0,v_tol,-1.0,corr_status,cross_gamma,cross_sigma)){          // assume success at this point
           rect_schema->record_step(obj->correlation_point_global_id(),sf,cross_sigma,1,cross_gamma,0.0,0.0,0.0,0,corr_status,num_iterations);
           point_cloud.add_point(x, y);
-          good_u.push_back(rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS));
+          good_u.push_back(std::vector<scalar_t>(1,rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS)));
           cv::Point pt1(x,y);
           cv::circle(left_img_rmp, pt1, 10, cv::Scalar(0),3);
           std::vector<scalar_t> params(sf->num_params(),0.0);
           for(int_t i=0;i<sf->num_params();++i)
             params[i] = (*sf)(i);
-          rectified_points.insert(std::make_pair(std::make_pair((int_t)x,(int_t)y),params));
+          converged_points.insert(std::make_pair(std::make_pair((int_t)x,(int_t)y),params));
         }else{
           rect_schema->record_failed_step(obj->correlation_point_global_id(),corr_status,num_iterations);
           continue;
         }
       }
       // output image for debugging with iteration number in filename
+      create_directory(".dice");
       std::stringstream debug_name;
-      debug_name << "initial_pass_"<< loop << ".png";
+      debug_name << ".dice/initial_pass_"<< loop << ".png";
       cv::imwrite(debug_name.str(),left_img_rmp);
     } // end loop over feature matching attempts
 
-    // top down marching pixel by pixel from neighbor
+    // search by marching pixel by pixel from neighbor
 
-    const scalar_t marching_step_size = 2.0; // FIXME should be integer values?
-    march_from_neighbor_init(UP,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_top.png",255,10);
-    march_from_neighbor_init(LEFT,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_left.png",225,10);
-    march_from_neighbor_init(RIGHT,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_right.png",200,10);
-    march_from_neighbor_init(DOWN,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_bottom.png",175,10);
-    march_from_neighbor_init(UP,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_top_2.png",255,8);
-    march_from_neighbor_init(RIGHT,marching_step_size,rect_schema,gamma_tol,v_tol,rectified_points,left_img_rmp,"neigh_march_right_2.png",225,8);
+    const int_t marching_step_size = 2; // should be integer value
+    march_from_neighbor_init(UP,marching_step_size,rect_schema,gamma_tol,v_tol,converged_points,left_img_rmp,".dice/neigh_march_top.png",255,10);
+    march_from_neighbor_init(LEFT,marching_step_size,rect_schema,gamma_tol,v_tol,converged_points,left_img_rmp,".dice/neigh_march_left.png",225,10);
+    march_from_neighbor_init(RIGHT,marching_step_size,rect_schema,gamma_tol,v_tol,converged_points,left_img_rmp,".dice/neigh_march_right.png",200,10);
+    march_from_neighbor_init(DOWN,marching_step_size,rect_schema,gamma_tol,v_tol,converged_points,left_img_rmp,".dice/neigh_march_bottom.png",175,10);
+    // do a couple more for good measure
+    march_from_neighbor_init(UP,marching_step_size,rect_schema,gamma_tol,v_tol,converged_points,left_img_rmp,".dice/neigh_march_top_2.png",255,8);
+    march_from_neighbor_init(RIGHT,marching_step_size,rect_schema,gamma_tol,v_tol,converged_points,left_img_rmp,".dice/neigh_march_right_2.png",225,8);
 
+    std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_it;
+    std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_begin = converged_points.begin();
+    std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_end   = converged_points.end();
     // keep these commented out lines around for debugging if needed, then delete later
-    //std::FILE * disparityFilePtr = fopen("final_disparity.txt","w");
-    //std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_it;
-    //std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_begin = rectified_points.begin();
-    //std::map<std::pair<int_t,int_t>,std::vector<scalar_t> >::const_iterator map_end   = rectified_points.end();
+    //std::FILE * disparityFilePtr = fopen(".dice/final_disparity.txt","w");
     //for(map_it=map_begin;map_it!=map_end;++map_it){
     //  assert(map_it->second.size()>0);
     //  fprintf(disparityFilePtr,"%i %i %f\n",map_it->first.first,map_it->first.second,map_it->second[0]);
     //}
     //fclose(disparityFilePtr);
-    //std::FILE * disparityFilePtr = fopen("final_disparity.txt","w");
-    //for(int_t local_id = 0; local_id < rect_schema->local_num_subsets(); ++local_id){
-    //  if(rect_schema->local_field_value(local_id, SIGMA_FS)<0.0) continue;
-    //  fprintf(disparityFilePtr,"%f %f %f %f %f\n",
-    //      rect_schema->local_field_value(local_id,SUBSET_COORDINATES_X_FS),
-    //      rect_schema->local_field_value(local_id,SUBSET_COORDINATES_Y_FS),
-    //      rect_schema->local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS),
-    //      rect_schema->local_field_value(local_id,ITERATIONS_FS),
-    //      rect_schema->local_field_value(local_id,GAMMA_FS));
-    //}
-    //fclose(disparityFilePtr);
-
 
     // create a new point cloud with all the rectified points (and none of the feature matched points which were in the last point cloud)
+    Point_Cloud_2D<scalar_t> rect_point_cloud(converged_points);
 
+    // organize the values of the points cloud in a vector of vectors for the least squares fit
+    // TODO find a better way to do this without a manual deep copy
+    std::vector<std::vector<scalar_t> > converged_values(converged_points.size(),std::vector<scalar_t>(sf->num_params(),0.0));
+    size_t map_index = 0;
+    for(map_it=map_begin;map_it!=map_end;++map_it)
+      converged_values[map_index++] = map_it->second;
 
-    // rectify the locations of the subset coordinates
+    // convert the schema subset locations to the undistorted rectified coordinates to use the point cloud above to initialize and correlate
 
+    std::vector<cv::Point2f> undist_rect_schema_points;
+    std::vector<cv::Point2f> dist_unrect_schema_points(local_num_subsets());
+    for(int_t i=0;i<local_num_subsets();++i)
+      dist_unrect_schema_points[i] = cv::Point2f(local_field_value(i,SUBSET_COORDINATES_X_FS),local_field_value(i,SUBSET_COORDINATES_Y_FS));
+    undistort_and_rectify(dist_unrect_schema_points,undist_rect_schema_points,M1,D1,R1,P1);
 
+    // for each subset least squares fit the point cloud to initialize and correlate
+    std::vector<cv::Point2f> undist_rect_disp_points(local_num_subsets(),cv::Point2f(0.0,0.0));
 
+    for(int_t local_id=0;local_id<local_num_subsets();++local_id){
+      // TODO do we need to check the SSSIG?
+      // the subset centroid needs to be converted to undistroted and rectified coordinates
+      const scalar_t x = undist_rect_schema_points[local_id].x;//local_field_value(local_id,SUBSET_COORDINATES_X_FS);
+      const scalar_t y = undist_rect_schema_points[local_id].y;//local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
+      scalar_t cross_u = 0.0, cross_v = 0.0, cross_t = 0.0;
+      DEBUG_MSG("Schema::initialize_cross_correlation(): cross correlating subset " << local_id << " (" << x << "," << y << ") based on ls fit of the rectified point cloud");
+      std::vector<scalar_t> init_values(sf->num_params(),0.0);
+      const scalar_t neigh_size = 1.5*step_size;
+      rect_point_cloud.least_squares_fit(x,y,neigh_size,converged_values,init_values);
+      sf->insert(init_values);
+      //sf->print_parameters();
+      int_t num_iterations = -1;
+      // need to create a generic objective since the original schema wont have the rectified images
+      Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(rect_schema.get(),x,y)); // note the x and y coordinates will get truncated to int values
+      Status_Flag corr_status = obj->computeUpdateFast(sf,num_iterations);
+      if(shape_function_params_valid(sf,obj,gamma_tol,-1.0,v_tol,-1.0,corr_status,cross_gamma,cross_sigma)){
+        cv::Point pt1(x,y);
+        cv::circle(left_img_rmp,pt1,5,cv::Scalar(255),3);
+        local_field_value(local_id,SIGMA_FS) = cross_sigma;
+        local_field_value(local_id,GAMMA_FS) = cross_gamma;
+        local_field_value(local_id,MATCH_FS) = 0;
+        local_field_value(local_id,STATUS_FLAG_FS) = corr_status;
+        local_field_value(local_id,ITERATIONS_FS) = num_iterations;
+        sf->map_to_u_v_theta(x,y,cross_u,cross_v,cross_t);
+      }else{
+        DEBUG_MSG("Schema::rectified_correspondences_init(): failed correlation at local id " << local_id);
+        local_field_value(local_id,SIGMA_FS) = -1.0;
+        local_field_value(local_id,GAMMA_FS) = -1.0;
+        local_field_value(local_id,MATCH_FS) = -1;
+        local_field_value(local_id,NEIGHBOR_ID_FS) = -2;
+        local_field_value(local_id,STATUS_FLAG_FS) = corr_status;
+        local_field_value(local_id,ITERATIONS_FS) = num_iterations;
+      }
+      undist_rect_disp_points[local_id] = cv::Point2f(x+cross_u,y+cross_v);
+    }
+    cv::imwrite(".dice/first_cut.png",left_img_rmp);
 
+    // convert the displacements back to the original distorted and unrectified coordinate frame
+    std::vector<cv::Point2f> dist_unrect_disp_points;
+    unrectify_and_distort(undist_rect_disp_points,dist_unrect_disp_points,M2,D2,R2,P2);
 
-    TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Implementation not completed yet");
+    // save off the displacements in the original image coordinates
+    for(int_t local_id=0;local_id<local_num_subsets();++local_id){
+      local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS) = dist_unrect_disp_points[local_id].x - local_field_value(local_id,SUBSET_COORDINATES_X_FS);
+      local_field_value(local_id,SUBSET_DISPLACEMENT_Y_FS) = dist_unrect_disp_points[local_id].y - local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
+    }
 
-    // TODO fill in the gaps between subsets
+    // TODO CHECK THE EPIPOLAR ERROR LIKE BELOW?
 
-    // TODO compute the un-rectified q and r fields
+    // reset the ref image (so that the previous image gets updated.
+    set_ref_image(left_image_string);
 
     DEBUG_MSG("Schema::initialize_cross_correlation(): rectified correspondences successful");
     return 0;

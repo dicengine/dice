@@ -1028,6 +1028,33 @@ public:
       scalar_t & return_gamma,
       scalar_t & return_sigma)const;
 
+  /// take points from distorted image coordinates and undistort and stereo rectify them
+  /// \param in input coordinates
+  /// \param out output coordinates
+  /// \param M1 camera intrinsics from stereoCalibrate
+  /// \param D1 distortion coeffs from stereoCalibrate
+  /// \param R1 rectification rotation matrix from stereoRectify
+  /// \param P1 projection matrix from stereoRectify
+  void undistort_and_rectify(std::vector<cv::Point2f> & in,
+      std::vector<cv::Point2f> & out,
+      cv::Mat & M1,
+      cv::Mat & D1,
+      cv::Mat & R1,
+      cv::Mat & P1) const;
+
+  /// take points from undistorted and rectified image coordinates and unrectify and distort them
+  /// \param in input coordinates
+  /// \param out output coordinates
+  /// \param M1 camera intrinsics from stereoCalibrate
+  /// \param D1 distortion coeffs from stereoCalibrate
+  /// \param R1 rectification rotation matrix from stereoRectify
+  /// \param P1 projection matrix from stereoRectify
+  void unrectify_and_distort(std::vector<cv::Point2f> & in,
+      std::vector<cv::Point2f> & out,
+      cv::Mat & M1,
+      cv::Mat & D1,
+      cv::Mat & R1,
+      cv::Mat & P1) const;
 
   /// estimate the error in the displacement resolution and strain
   /// \param correlation_params parameters to apply to the resolution estimation
