@@ -3429,13 +3429,31 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
     std::vector<cv::Point2f> dist_unrect_disp_points;
     unrectify_and_distort(undist_rect_disp_points,dist_unrect_disp_points,M2,D2,R2,P2);
 
-    // save off the displacements in the original image coordinates
+    // save off the displacements in the original image coordinates and check epipolar error
+    float epi_dist_tol = 0.5f;
+    if(tri->avg_epipolar_error()!=0.0){
+      epi_dist_tol = 3.0*tri->avg_epipolar_error();
+    }
+
     for(int_t local_id=0;local_id<local_num_subsets();++local_id){
       local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS) = dist_unrect_disp_points[local_id].x - local_field_value(local_id,SUBSET_COORDINATES_X_FS);
       local_field_value(local_id,SUBSET_DISPLACEMENT_Y_FS) = dist_unrect_disp_points[local_id].y - local_field_value(local_id,SUBSET_COORDINATES_Y_FS);
+      const float a = local_field_value(local_id,EPI_A_FS);
+      const float b = local_field_value(local_id,EPI_B_FS);
+      const float c = local_field_value(local_id,EPI_C_FS);
+      const float stereo_x = local_field_value(local_id,SUBSET_COORDINATES_X_FS) + local_field_value(local_id,SUBSET_DISPLACEMENT_X_FS);
+      const float stereo_y = local_field_value(local_id,SUBSET_COORDINATES_Y_FS) + local_field_value(local_id,SUBSET_DISPLACEMENT_Y_FS);
+      std::vector<scalar_t> sx(1,stereo_x);
+      std::vector<scalar_t> sy(1,stereo_y);
+      tri->undistort_points(sx,sy,1); // right camera
+      const float dist = (std::abs(a*sx[0]+b*sy[0]+c)/std::sqrt(a*a+b*b));
+      DEBUG_MSG("Schema::initialize_cross_correlation(): epipolar error for subset " << local_id << ": "<< dist);
+      if(dist>epi_dist_tol){
+        local_field_value(local_id,SIGMA_FS) = -1.0;
+        local_field_value(local_id,MATCH_FS) = -1;
+        DEBUG_MSG("Schema::initialize_cross_correlation(): failed epipolar distance threshold");
+      }
     }
-
-    // TODO CHECK THE EPIPOLAR ERROR LIKE BELOW?
 
     // reset the ref image (so that the previous image gets updated.
     set_ref_image(left_image_string);
