@@ -594,7 +594,7 @@ Camera::image_to_sensor(
       break;
     }
   }
-  DEBUG_MSG("Camera::image_to_sensor(): integer locations is " << integer_locs);
+  //DEBUG_MSG("Camera::image_to_sensor(): integer locations is " << integer_locs);
 
   //transformation from distorted image locations to undistorted sensor locations
   int_t index;
