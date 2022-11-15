@@ -822,6 +822,57 @@ Plotly_Contour_Post_Processor::execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP
   DEBUG_MSG("Plotly_Contour_Post_Processor execute() end");
 }
 
+Distortion_Correction_Post_Processor::Distortion_Correction_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
+  Post_Processor(post_process_distortion_correction){
+  field_specs_.push_back(DICe::field_enums::DIST_CORRECTED_SUBSET_X_FS);
+  field_specs_.push_back(DICe::field_enums::DIST_CORRECTED_SUBSET_Y_FS);
+  field_specs_.push_back(DICe::field_enums::DIST_CORRECTED_SUBSET_DISP_X_FS);
+  field_specs_.push_back(DICe::field_enums::DIST_CORRECTED_SUBSET_DISP_Y_FS);
+  DEBUG_MSG("Enabling post processor Distortion_Correction_Post_Processor with associated fields:");
+  for(size_t i=0;i<field_specs_.size();++i){
+    DEBUG_MSG(field_specs_[i].get_name_label());
+  }
+  std::string camera_sys_file = params->get<std::string>(camera_system_file);
+  DEBUG_MSG("Distortion_Correction_Post_Processor(): camera system file: " << camera_sys_file);
+  tri_ = Teuchos::rcp(new DICe::Triangulation(camera_sys_file));
+}
+
+void
+Distortion_Correction_Post_Processor::execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img){
+  DEBUG_MSG("Distortion_Correction_Post_Processor execute() begin");
+  Teuchos::RCP<DICe::MultiField> subset_x = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_X_FS);
+  Teuchos::RCP<DICe::MultiField> subset_y = mesh_->get_field(DICe::field_enums::SUBSET_COORDINATES_Y_FS);
+  Teuchos::RCP<DICe::MultiField> subset_u = mesh_->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_X_FS);
+  Teuchos::RCP<DICe::MultiField> subset_v = mesh_->get_field(DICe::field_enums::SUBSET_DISPLACEMENT_Y_FS);
+  Teuchos::RCP<DICe::MultiField> subset_x_prime = mesh_->get_field(DICe::field_enums::DIST_CORRECTED_SUBSET_X_FS);
+  Teuchos::RCP<DICe::MultiField> subset_y_prime = mesh_->get_field(DICe::field_enums::DIST_CORRECTED_SUBSET_Y_FS);
+  Teuchos::RCP<DICe::MultiField> subset_u_prime = mesh_->get_field(DICe::field_enums::DIST_CORRECTED_SUBSET_DISP_X_FS);
+  Teuchos::RCP<DICe::MultiField> subset_v_prime = mesh_->get_field(DICe::field_enums::DIST_CORRECTED_SUBSET_DISP_Y_FS);
+
+  std::vector<cv::Point2f> undist_points;
+  std::vector<cv::Point2f> undist_def_points;
+  const int_t num_subsets = mesh_->get_scalar_node_overlap_map()->get_num_local_elements();
+  std::vector<cv::Point2f> dist_points(num_subsets);
+  std::vector<cv::Point2f> dist_def_points(num_subsets);
+  for(int_t i=0;i<num_subsets;++i){
+    dist_points[i] = cv::Point2f(subset_x->local_value(i),subset_y->local_value(i));
+    dist_def_points[i] = cv::Point2f(subset_x->local_value(i)+subset_u->local_value(i),subset_y->local_value(i)+subset_v->local_value(i));
+  }
+  cv::Mat M = tri_->camera_matrix(0);
+  cv::Mat D = tri_->distortion_matrix(0);
+  cv::Mat M_prime = cv::Mat::zeros(3,4,CV_64F);
+  M.copyTo(M_prime(cv::Rect(0,0,3,3)));
+  cv::undistortPoints(dist_points,undist_points,M,D,cv::Mat(),M_prime);
+  cv::undistortPoints(dist_def_points,undist_def_points,M,D,cv::Mat(),M_prime);
+
+  for(int_t i=0;i<num_subsets;++i){
+    subset_x_prime->local_value(i) = undist_points[i].x;
+    subset_y_prime->local_value(i) = undist_points[i].y;
+    subset_u_prime->local_value(i) = undist_def_points[i].x - undist_points[i].x;
+    subset_v_prime->local_value(i) = undist_def_points[i].y - undist_points[i].y;
+  }
+  DEBUG_MSG("Distortion_Correction_Post_Processor execute() end");
+}
 
 VSG_Strain_Post_Processor::VSG_Strain_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params) :
   Post_Processor(post_process_vsg_strain){

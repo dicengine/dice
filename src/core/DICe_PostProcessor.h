@@ -45,6 +45,7 @@
 #include <DICe.h>
 #include <DICe_Mesh.h>
 #include <DICe_PointCloud.h>
+#include <DICe_Triangulation.h>
 
 #include <Teuchos_ParameterList.hpp>
 
@@ -82,17 +83,20 @@ const char * const post_process_live_plots = "post_process_live_plots";
 const char * const post_process_plotly_contour = "post_process_plotly_contour";
 /// String parameter name
 const char * const plotly_contour_grid_step = "plotly_contour_grid_step";
+/// String parameter name
+const char * const post_process_distortion_correction = "post_process_distortion_correction";
 
 
 /// Number of post processor options
-const int_t num_valid_post_processor_params = 5;
+const int_t num_valid_post_processor_params = 6;
 /// Set of all the valid post processors
 const char * const valid_post_processor_params[num_valid_post_processor_params] = {
   post_process_vsg_strain,
   post_process_nlvc_strain,
   post_process_plotly_contour,
   post_process_altitude,
-  post_process_crack_locator
+  post_process_crack_locator,
+  post_process_distortion_correction
 };
 
 /// String field name
@@ -213,7 +217,7 @@ protected:
 };
 
 /// \class DICe::VSG_Strain_Post_Processor
-/// \brief A specific instance of post processor that computes vurtual strain gauge (VSG) strain
+/// \brief A specific instance of post processor that computes virtual strain gauge (VSG) strain
 ///
 /// The VSG strain is computed by doing a least-squares fit of the data and computing the
 /// strain using the coefficients of the fitted polynomial. It is well know that for large
@@ -257,6 +261,46 @@ public:
 private:
   /// Window size for the virtual strain gauge (in pixels)
   int_t window_size_;
+};
+
+/// \class DICe::Distortion_Correction_Post_Processor
+/// \brief A specific instance of post processor that corrects the subset displacements for image distortions
+///
+/// This post processor corrects the subset displacement values for lens distortions and outputs the new corrected
+/// displacement field in a new field called DIST_CORRECTED_SUBSET_DISP_X and ..._Y
+class DICE_LIB_DLL_EXPORT
+Distortion_Correction_Post_Processor : public Post_Processor {
+
+public:
+
+  /// Default constructor
+  /// \param params Pointer to the set of parameters for this post processor
+  Distortion_Correction_Post_Processor(const Teuchos::RCP<Teuchos::ParameterList> & params);
+
+  /// Virtual destructor
+  virtual ~Distortion_Correction_Post_Processor(){}
+
+  /// See base clase docutmentation
+  virtual int_t strain_window_size(){return -1.0;}
+
+  /// See base clase docutmentation
+  virtual void set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){}
+
+  /// Collect the neighborhoods of each of the points
+  virtual void pre_execution_tasks(){};
+
+  /// Execute the post processor
+  virtual void execute(Teuchos::RCP<Image> ref_img, Teuchos::RCP<Image> def_img);
+
+  /// See base class documentation
+  using Post_Processor::field_specs;
+
+protected:
+
+  /// Triangulation to use for correcting displacements
+  Teuchos::RCP<DICe::Triangulation> tri_;
+
+
 };
 
 /// \class DICe::NLVC_Strain_Post_Processor

@@ -79,22 +79,22 @@ Schema::Schema(const std::string & input_file_name,
   const std::string & params_file_name){
   // create a parameter list from the selected file
   Teuchos::RCP<Teuchos::ParameterList> corr_params = read_correlation_params(params_file_name);
-  default_constructor_tasks(corr_params);
   // create a parameter list from the selected file
   Teuchos::RCP<Teuchos::ParameterList> input_params = read_input_params(input_file_name);
+  default_constructor_tasks(corr_params,input_params);
   initialize(input_params,corr_params);
 }
 
 Schema::Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params){
-  default_constructor_tasks(correlation_params);
+  default_constructor_tasks(correlation_params,input_params);
   initialize(input_params,correlation_params);
 }
 
 Schema::Schema(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   const Teuchos::RCP<Teuchos::ParameterList> & correlation_params,
   const Teuchos::RCP<Schema> & schema){
-  default_constructor_tasks(correlation_params);
+  default_constructor_tasks(correlation_params,input_params);
   initialize(input_params,schema);
 }
 
@@ -445,7 +445,8 @@ Schema::set_ref_image(Teuchos::RCP<Image> img){
 }
 
 void
-Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params){
+Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & corr_params,
+    const Teuchos::RCP<Teuchos::ParameterList> & input_params){
   global_num_subsets_ = 0;
   local_num_subsets_ = 0;
   subset_dim_ = -1;
@@ -462,8 +463,15 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   normalize_gamma_with_active_pixels_ = false;
   gauss_filter_images_ = false;
   gauss_filter_mask_size_ = 7;
-  init_params_ = params==Teuchos::null ? Teuchos::rcp(new Teuchos::ParameterList()):
-    Teuchos::rcp(new Teuchos::ParameterList(*params));
+  init_params_ = corr_params==Teuchos::null ? Teuchos::rcp(new Teuchos::ParameterList()):
+    Teuchos::rcp(new Teuchos::ParameterList(*corr_params));
+  if(input_params!=Teuchos::null){
+    // copy over the camera system file to so both the input and correlation params have it
+    // could be needed by the post processors
+    if(input_params->isParameter(DICe::camera_system_file)){
+      init_params_->set(DICe::camera_system_file,input_params->get<std::string>(DICe::camera_system_file));
+    }
+  }
   comm_ = Teuchos::rcp(new MultiField_Comm());
   path_file_names_ = Teuchos::rcp(new std::map<int_t,std::string>());
   optical_flow_flags_ = Teuchos::rcp(new std::map<int_t,bool>());
@@ -478,7 +486,7 @@ Schema::default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & p
   read_full_images_ = false;
   sort_txt_output_ = false;
   threshold_block_size_ = -1;
-  set_params(params);
+  set_params(corr_params);
   prev_imgs_.push_back(Teuchos::null);
   def_imgs_.push_back(Teuchos::null);
   has_extents_ = false;
@@ -771,6 +779,13 @@ Schema::set_params(const Teuchos::RCP<Teuchos::ParameterList> & params){
     Teuchos::RCP<VSG_Strain_Post_Processor> vsg_ptr = Teuchos::rcp (new VSG_Strain_Post_Processor(ppParams));
     post_processors_.push_back(vsg_ptr);
   }
+  if(diceParams->isParameter(DICe::post_process_distortion_correction)){
+    Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
+    TEUCHOS_TEST_FOR_EXCEPTION(!init_params_->isParameter(camera_system_file),std::runtime_error,"Error, Distortion Correction Post Processor requires a camera system file");
+    ppParams->set<std::string>(camera_system_file,init_params_->get<std::string>(camera_system_file));
+    Teuchos::RCP<Distortion_Correction_Post_Processor> dc_ptr = Teuchos::rcp (new Distortion_Correction_Post_Processor(ppParams));
+    post_processors_.push_back(dc_ptr);
+  }
   if(diceParams->isParameter(DICe::post_process_plotly_contour)){
     Teuchos::ParameterList sublist = diceParams->sublist(DICe::post_process_plotly_contour);
     Teuchos::RCP<Teuchos::ParameterList> ppParams = Teuchos::rcp( new Teuchos::ParameterList());
@@ -977,10 +992,6 @@ Schema::initialize(const Teuchos::RCP<Teuchos::ParameterList> & input_params,
   const std::string output_prefix = input_params->get<std::string>(DICe::output_prefix,"DICe_solution");
   init_params_->set(DICe::output_prefix,output_prefix);
   init_params_->set(DICe::output_folder,output_folder);
-  if(input_params->isParameter(DICe::camera_system_file)){
-    const std::string camera_sys_file = input_params->get<std::string>(DICe::camera_system_file);
-    init_params_->set(DICe::camera_system_file,camera_sys_file);
-  }
 
   if(analysis_type_==GLOBAL_DIC){
     // create the computational mesh:

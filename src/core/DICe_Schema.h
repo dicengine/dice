@@ -1152,7 +1152,8 @@ private:
 
   /// \brief Sets the default values for the schema's member data and other initialization tasks
   /// \param params Optional correlation parameters
-  void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & params);
+  void default_constructor_tasks(const Teuchos::RCP<Teuchos::ParameterList> & corr_params,
+      const Teuchos::RCP<Teuchos::ParameterList> & input_params=Teuchos::null);
 
   /// \brief Create an exodus mesh for output
   /// \param decomp pointer to a decomposition

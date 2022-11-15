@@ -108,6 +108,10 @@ void create_string_maps()
   field_name_string[field_enums::PROJECTION_AUG_Y]                                   = "PROJECTION_AUG_Y";
   field_name_string[field_enums::SUBSET_DISPLACEMENT_X]                              = "DISPLACEMENT_X"; // the string is different from the enum because of legacy field names
   field_name_string[field_enums::SUBSET_DISPLACEMENT_Y]                              = "DISPLACEMENT_Y"; // the string is different from the enum because of legacy field names
+  field_name_string[field_enums::DIST_CORRECTED_SUBSET_DISP_X]                       = "DIST_CORRECTED_SUBSET_DISP_X";
+  field_name_string[field_enums::DIST_CORRECTED_SUBSET_DISP_Y]                       = "DIST_CORRECTED_SUBSET_DISP_Y";
+  field_name_string[field_enums::DIST_CORRECTED_SUBSET_X]                            = "DIST_CORRECTED_SUBSET_X";
+  field_name_string[field_enums::DIST_CORRECTED_SUBSET_Y]                            = "DIST_CORRECTED_SUBSET_Y";
   field_name_string[field_enums::STEREO_DISPLACEMENT_X]                              = "STEREO_DISPLACEMENT_X";
   field_name_string[field_enums::STEREO_DISPLACEMENT_Y]                              = "STEREO_DISPLACEMENT_Y";
   field_name_string[field_enums::MODEL_DISPLACEMENT_X]                               = "MODEL_DISPLACEMENT_X";

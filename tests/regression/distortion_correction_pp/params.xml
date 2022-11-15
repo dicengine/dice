@@ -1,0 +1,23 @@
+<ParameterList>
+  <Parameter name="interpolation_method" type="string" value="KEYS_FOURTH" />
+  <Parameter name="sssig_threshold" type="double" value="10" />
+  <Parameter name="optimization_method" type="string" value="GRADIENT_BASED" />
+  <Parameter name="initialization_method" type="string" value="USE_FEATURE_MATCHING" />
+  <Parameter name="enable_translation" type="bool" value="true" />
+  <Parameter name="enable_rotation" type="bool" value="true" />
+  <Parameter name="enable_normal_strain" type="bool" value="true" />
+  <Parameter name="enable_shear_strain" type="bool" value="false" />
+  <Parameter name="output_delimiter" type="string" value="," />
+  <ParameterList name="post_process_distortion_correction">
+  </ParameterList>
+  <ParameterList name="output_spec"> 
+    <Parameter name="COORDINATE_X" type="bool" value="true" />
+    <Parameter name="COORDINATE_Y" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_X" type="bool" value="true" />
+    <Parameter name="DISPLACEMENT_Y" type="bool" value="true" />
+    <Parameter name="DIST_CORRECTED_SUBSET_X" type="bool" value="true" />
+    <Parameter name="DIST_CORRECTED_SUBSET_Y" type="bool" value="true" />
+    <Parameter name="DIST_CORRECTED_SUBSET_DISP_X" type="bool" value="true" />
+    <Parameter name="DIST_CORRECTED_SUBSET_DISP_Y" type="bool" value="true" />
+  </ParameterList>
+</ParameterList>

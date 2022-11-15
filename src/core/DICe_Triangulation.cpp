@@ -271,6 +271,12 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
   DEBUG_MSG("Triangulation::load_calibration_parameters(): Parsing calibration parameters from file: " << param_file_name);
 
   camera_system_ = Teuchos::rcp(new Camera_System(param_file_name));
+
+  // set the camera intrinsic parameters
+  for(size_t i=0;i<camera_system_->num_cameras();++i)
+    for(size_t j=0;j<Camera::MAX_CAM_INTRINSIC_PARAM;++j)
+    cal_intrinsics_[i][j] = (*camera_system_->camera(i)->intrinsics())[j];
+
   if(camera_system_->num_cameras()==1) return;
 
   TEUCHOS_TEST_FOR_EXCEPTION(camera_system_->num_cameras()!=2,std::runtime_error,"");
@@ -295,11 +301,6 @@ Triangulation::load_calibration_parameters(const std::string & param_file_name){
   if(!camera_system_->extrinsics_relative_camera_to_camera()){
     cam_0_to_cam_1_ = cam_0_to_cam_1_ * cam_0_to_world_;
   }
-
-  // set the camera intrinsic parameters
-  for(size_t i=0;i<camera_system_->num_cameras();++i)
-    for(size_t j=0;j<Camera::MAX_CAM_INTRINSIC_PARAM;++j)
-    cal_intrinsics_[i][j] = (*camera_system_->camera(i)->intrinsics())[j];
 
 #ifdef DICE_DEBUG_MSG
   std::cout << *camera_system_.get() << std::endl;

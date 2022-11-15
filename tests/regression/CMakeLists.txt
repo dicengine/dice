@@ -15,6 +15,7 @@ SET(REGRESSION_TESTS
   simple_tracking
   reset_lost_subsets
   epipolar_distortion
+  distortion_correction_pp
 )
 IF(NOT UNIX)
   SET(REGRESSION_TESTS

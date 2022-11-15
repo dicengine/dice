@@ -94,6 +94,10 @@ Field_Name
   PROJECTION_AUG_Y,
   SUBSET_DISPLACEMENT_X,
   SUBSET_DISPLACEMENT_Y,
+  DIST_CORRECTED_SUBSET_X,
+  DIST_CORRECTED_SUBSET_Y,
+  DIST_CORRECTED_SUBSET_DISP_X,
+  DIST_CORRECTED_SUBSET_DISP_Y,
   STEREO_DISPLACEMENT_X,
   STEREO_DISPLACEMENT_Y,
   MODEL_DISPLACEMENT_X,
@@ -476,6 +480,14 @@ const Field_Spec SUBSET_DISPLACEMENT_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_e
 /// field spec
 const Field_Spec SUBSET_DISPLACEMENT_Y_NM1_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::SUBSET_DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::STATE_N_MINUS_ONE,false,true);
 /// field spec
+const Field_Spec DIST_CORRECTED_SUBSET_DISP_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DIST_CORRECTED_SUBSET_DISP_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec DIST_CORRECTED_SUBSET_DISP_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DIST_CORRECTED_SUBSET_DISP_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec DIST_CORRECTED_SUBSET_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DIST_CORRECTED_SUBSET_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
+const Field_Spec DIST_CORRECTED_SUBSET_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::DIST_CORRECTED_SUBSET_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
+/// field spec
 const Field_Spec STEREO_SUBSET_DISPLACEMENT_X_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::STEREO_DISPLACEMENT_X,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
 /// field spec
 const Field_Spec STEREO_SUBSET_DISPLACEMENT_Y_FS(field_enums::SCALAR_FIELD_TYPE,field_enums::STEREO_DISPLACEMENT_Y,field_enums::NODE_RANK,field_enums::NO_FIELD_STATE,true,true);
@@ -709,7 +721,7 @@ const Field_Spec ROT_TRANS_3D_TRANS_Y_FS(field_enums::SCALAR_FIELD_TYPE, field_e
 const Field_Spec ROT_TRANS_3D_TRANS_Z_FS(field_enums::SCALAR_FIELD_TYPE, field_enums::ROT_TRANS_3D_TRANS_Z, field_enums::NODE_RANK, field_enums::NO_FIELD_STATE, true);
 
 /// the number of fields that have been defined (must be set at compile time)
-const int_t num_fields_defined = 142;
+const int_t num_fields_defined = 146;
 
 /// array of all the valid field specs
 const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
@@ -736,6 +748,10 @@ const field_enums::Field_Spec fs_spec_vec[num_fields_defined] = {
     SUBSET_DISPLACEMENT_X_NM1_FS,
     SUBSET_DISPLACEMENT_Y_FS,
     SUBSET_DISPLACEMENT_Y_NM1_FS,
+    DIST_CORRECTED_SUBSET_DISP_X_FS,
+    DIST_CORRECTED_SUBSET_DISP_Y_FS,
+    DIST_CORRECTED_SUBSET_X_FS,
+    DIST_CORRECTED_SUBSET_Y_FS,
     STEREO_SUBSET_DISPLACEMENT_X_FS,
     STEREO_SUBSET_DISPLACEMENT_Y_FS,
     MODEL_DISPLACEMENT_X_FS,
