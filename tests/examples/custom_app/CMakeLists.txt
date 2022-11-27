@@ -123,6 +123,16 @@ target_link_libraries(main
 # find OpenCV
 message(STATUS "Looking for OpenCV in dir: ${OpenCV_DIR}")
 find_package( OpenCV NO_DEFAULT_PATH PATHS ${OpenCV_DIR} )
+MESSAGE(STATUS "Checking for OpenCV contrib libraries in ${OpenCV_DIR}/modules/xfeatures2d")
+if(EXISTS "${OpenCV_DIR}/modules/xfeatures2d")
+  MESSAGE(STATUS "OpenCV contrib modules found")
+  find_package(iconv REQUIRED)
+  add_definitions(-DHAVE_OPENCV_CONTRIB)
+else()
+  MESSAGE(STATUS "OpenCV contrib modules NOT found")
+endif()
+
+find_package(iconv REQUIRED)
 IF(OpenCV_FOUND)
   set(DICE_ENABLE_OPENCV ON)
 ELSE()
