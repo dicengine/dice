@@ -74,6 +74,7 @@ Camera_System::read_camera_system_file(const std::string & file) {
 
   const std::string xml("xml");
   const std::string txt("txt");
+  const std::string csv("csv");
   bool valid_dice_xml = true;
 
   Teuchos::RCP<Teuchos::ParameterList> sys_params = Teuchos::rcp(new Teuchos::ParameterList());
@@ -486,6 +487,83 @@ Camera_System::read_camera_system_file(const std::string & file) {
       Teuchos::RCP<DICe::Camera> camera_1_ptr = Teuchos::rcp(new DICe::Camera(camera_info_1));
       cameras_.push_back(camera_1_ptr);
       DEBUG_MSG("Camera_System::read_camera_system_file(): successfully loaded cameras from text file");
+    }
+    // old DICe text format, kept around so that the GUI generated files from long ago will still work without having to
+    // re-run the calibrations
+    else if (file.find(csv) != std::string::npos) {
+      DEBUG_MSG("Camera_System::read_camera_system_file(): reading generic csv format camera system file");
+      sys_type_ = GENERIC_SYSTEM;
+
+      Camera::Camera_Info camera_info_0; // always two cameras per file in the csv format
+      Camera::Camera_Info camera_info_1;
+      camera_info_0.id_ = "CAMERA 0";
+      camera_info_1.id_ = "CAMERA 1";
+
+      // should only have 3 lines in this file each with 22 elements, the first row can be discarded
+      tokenize_line(dataFile, " \t<>");
+      std::vector<std::string>tokens0 = tokenize_line(dataFile, " ,\t<>");
+      std::vector<std::string>tokens1 = tokenize_line(dataFile, " ,\t<>");
+      TEUCHOS_TEST_FOR_EXCEPTION(tokens0.size()!=22, std::runtime_error,
+        "Error, invalid csv calibration parameters file: " << file);
+      TEUCHOS_TEST_FOR_EXCEPTION(tokens1.size()!=22, std::runtime_error,
+        "Error, invalid csv calibration parameters file: " << file);
+      for(size_t i=0;i<tokens0.size();++i)
+        std::cout << " tokens0: " << tokens0[i] << std::endl;
+      for(size_t i=0;i<tokens1.size();++i)
+        std::cout << " tokens1: " << tokens1[i] << std::endl;
+      TEUCHOS_TEST_FOR_EXCEPTION(tokens0[0].compare("LEFT")!=0, std::runtime_error,
+        "Error, invalid csv calibration parameters file: " << file);
+      TEUCHOS_TEST_FOR_EXCEPTION(tokens1[0].compare("RIGHT")!=0, std::runtime_error,
+        "Error, invalid csv calibration parameters file: " << file);
+
+      // read the rotation matrices and translations, etc
+      camera_info_0.rotation_matrix_(0,0) = strtod(tokens0[1].c_str(), NULL);
+      camera_info_0.rotation_matrix_(1,0) = strtod(tokens0[2].c_str(), NULL);
+      camera_info_0.rotation_matrix_(2,0) = strtod(tokens0[3].c_str(), NULL);
+      camera_info_0.rotation_matrix_(0,1) = strtod(tokens0[5].c_str(), NULL);
+      camera_info_0.rotation_matrix_(1,1) = strtod(tokens0[6].c_str(), NULL);
+      camera_info_0.rotation_matrix_(2,1) = strtod(tokens0[7].c_str(), NULL);
+      camera_info_0.rotation_matrix_(0,2) = strtod(tokens0[9].c_str(), NULL);
+      camera_info_0.rotation_matrix_(1,2) = strtod(tokens0[10].c_str(), NULL);
+      camera_info_0.rotation_matrix_(2,2) = strtod(tokens0[11].c_str(), NULL);
+      camera_info_0.tx_ = strtod(tokens0[13].c_str(), NULL);
+      camera_info_0.ty_ = strtod(tokens0[14].c_str(), NULL);
+      camera_info_0.tz_ = strtod(tokens0[15].c_str(), NULL);
+      // image sizes
+      camera_info_0.image_width_  = strtod(tokens0[17].c_str(), NULL);
+      camera_info_0.image_height_ = strtod(tokens0[18].c_str(), NULL);
+      camera_info_0.intrinsics_[Camera::CX] = 0.5 * camera_info_0.image_width_ - 0.5;
+      camera_info_0.intrinsics_[Camera::CY] = 0.5 * camera_info_0.image_height_ - 0.5;
+      camera_info_0.intrinsics_[Camera::FX] = camera_info_0.image_width_ * strtod(tokens0[21].c_str(), NULL) / strtod(tokens0[20].c_str(), NULL);
+      camera_info_0.intrinsics_[Camera::FY] = camera_info_0.intrinsics_[Camera::FX];
+
+
+      camera_info_1.rotation_matrix_(0,0) = strtod(tokens1[1].c_str(), NULL);
+      camera_info_1.rotation_matrix_(1,0) = strtod(tokens1[2].c_str(), NULL);
+      camera_info_1.rotation_matrix_(2,0) = strtod(tokens1[3].c_str(), NULL);
+      camera_info_1.rotation_matrix_(0,1) = strtod(tokens1[5].c_str(), NULL);
+      camera_info_1.rotation_matrix_(1,1) = strtod(tokens1[6].c_str(), NULL);
+      camera_info_1.rotation_matrix_(2,1) = strtod(tokens1[7].c_str(), NULL);
+      camera_info_1.rotation_matrix_(0,2) = strtod(tokens1[9].c_str(), NULL);
+      camera_info_1.rotation_matrix_(1,2) = strtod(tokens1[10].c_str(), NULL);
+      camera_info_1.rotation_matrix_(2,2) = strtod(tokens1[11].c_str(), NULL);
+      camera_info_1.tx_ = strtod(tokens1[13].c_str(), NULL);
+      camera_info_1.ty_ = strtod(tokens1[14].c_str(), NULL);
+      camera_info_1.tz_ = strtod(tokens1[15].c_str(), NULL);
+      // image sizes
+      camera_info_1.image_width_  = strtod(tokens1[17].c_str(), NULL);
+      camera_info_1.image_height_ = strtod(tokens1[18].c_str(), NULL);
+      camera_info_1.intrinsics_[Camera::CX] = 0.5 * camera_info_1.image_width_ - 0.5;
+      camera_info_1.intrinsics_[Camera::CY] = 0.5 * camera_info_1.image_height_ - 0.5;
+      camera_info_1.intrinsics_[Camera::FX] = camera_info_1.image_width_ * strtod(tokens1[21].c_str(), NULL) / strtod(tokens1[20].c_str(), NULL);
+      camera_info_1.intrinsics_[Camera::FY] = camera_info_1.intrinsics_[Camera::FX];
+
+      Teuchos::RCP<DICe::Camera> camera_0_ptr = Teuchos::rcp(new DICe::Camera(camera_info_0));
+      cameras_.push_back(camera_0_ptr);
+      Teuchos::RCP<DICe::Camera> camera_1_ptr = Teuchos::rcp(new DICe::Camera(camera_info_1));
+      cameras_.push_back(camera_1_ptr);
+
+      DEBUG_MSG("Camera_System::read_camera_system_file(): successfully loaded cameras from csv file");
     }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
