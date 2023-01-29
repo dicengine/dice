@@ -134,6 +134,14 @@ void write_xml_real_param(const std::string & file_name,
   const std::string & name,
   const double & value);
 
+/// \brief Write a vector of values to xml
+/// \param file_name the name of the xml file
+/// \param name the name of the variable
+/// \param values the vector of values
+void write_xml_high_precision_vector_param(const std::string & file_name,
+  const std::string & name,
+  const std::vector<double> & values);
+
 /// \brief Write a high precision real valued parameter to file
 /// \param file_name The name of the xml file to write to
 /// \param name The name of the parameter

@@ -197,6 +197,23 @@ void write_xml_high_precision_real_param(const std::string & file_name,
   file.close();
 }
 
+void write_xml_high_precision_vector_param(const std::string & file_name,
+  const std::string & name,
+  const std::vector<double> & values){
+  std::ofstream file;
+  file.open(file_name.c_str(),std::ios::app);
+  std::stringstream outputstream;
+  outputstream.precision(12);
+  outputstream << std::scientific;
+  outputstream << "<" << name << " type=\"array\">" << std::endl;
+  for(size_t i=0;i<values.size();++i){
+    outputstream << "<value>" << values[i] << "</value>" << std::endl;
+  }
+  outputstream << "</" << name << ">" << std::endl;
+  file <<outputstream.str();
+  file.close();
+}
+
 void write_xml_string_param(const std::string & file_name, const std::string & name, const std::string & value,
   const bool commented){
   write_xml_param(file_name,name,"string",value,commented);
