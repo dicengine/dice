@@ -461,6 +461,19 @@ public:
     image_to_world(image_x,image_y,dummy,world_x,world_y,world_z);
   }
 
+  /// helper function to convert world coordinates to image coordinates
+  /// \param image_x x location after applied lens distortion
+  /// \param image_y y location after applied lens distortion
+  /// \param world_x output world x coordinate
+  /// \param world_y output world y coordinate
+  /// \param world_z output world z coordinate
+  void world_to_image(const std::vector<scalar_t> & world_x,
+      const std::vector<scalar_t> & world_y,
+      const std::vector<scalar_t> & world_z,
+      std::vector<scalar_t> & image_x,
+      std::vector<scalar_t> & image_y
+  );
+
   ///projects sensor coordinates onto a plane in space described by zp,theta,phi overloaded for first partials
   /// \param sen_x x sensor location
   /// \param sen_y y sensor location

@@ -541,6 +541,36 @@ Camera::prep_lens_distortion() {
 }
 
 void
+Camera::world_to_image(const std::vector<scalar_t> & world_x,
+    const std::vector<scalar_t> & world_y,
+    const std::vector<scalar_t> & world_z,
+    std::vector<scalar_t> & image_x,
+    std::vector<scalar_t> & image_y){
+
+  const size_t vec_size = image_x.size();
+  TEUCHOS_TEST_FOR_EXCEPTION(image_y.size()!=vec_size,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(world_x.size()!=vec_size,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(world_y.size()!=vec_size,std::runtime_error,"");
+  TEUCHOS_TEST_FOR_EXCEPTION(world_z.size()!=vec_size,std::runtime_error,"");
+
+  std::vector<scalar_t> facet_params = get_facet_params();
+  TEUCHOS_TEST_FOR_EXCEPTION(facet_params.size()!=3,std::runtime_error,"");
+
+  // create the reference image:
+  std::vector<scalar_t> cam_x(vec_size,0.0);
+  std::vector<scalar_t> cam_y(vec_size,0.0);
+  std::vector<scalar_t> cam_z(vec_size,0.0);
+  std::vector<scalar_t> sensor_x(vec_size,0.0);
+  std::vector<scalar_t> sensor_y(vec_size,0.0);
+
+  // for each pixel convert from image coordinates to world coordinates and get the intensity value:
+  world_to_cam(world_x,world_y,world_z,cam_x,cam_y,cam_z);
+  cam_to_sensor(cam_x,cam_y,cam_z,sensor_x,sensor_y);
+  sensor_to_image(sensor_x,sensor_y,image_x,image_y);
+}
+
+
+void
 Camera::image_to_world(const std::vector<scalar_t> & image_x,
   const std::vector<scalar_t> & image_y,
   const std::vector<scalar_t> & rigid_body_params,
