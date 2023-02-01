@@ -507,10 +507,10 @@ Camera_System::read_camera_system_file(const std::string & file) {
         "Error, invalid csv calibration parameters file: " << file);
       TEUCHOS_TEST_FOR_EXCEPTION(tokens1.size()!=22, std::runtime_error,
         "Error, invalid csv calibration parameters file: " << file);
-      for(size_t i=0;i<tokens0.size();++i)
-        std::cout << " tokens0: " << tokens0[i] << std::endl;
-      for(size_t i=0;i<tokens1.size();++i)
-        std::cout << " tokens1: " << tokens1[i] << std::endl;
+      //for(size_t i=0;i<tokens0.size();++i)
+      //  std::cout << " tokens0: " << tokens0[i] << std::endl;
+      //for(size_t i=0;i<tokens1.size();++i)
+      //  std::cout << " tokens1: " << tokens1[i] << std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(tokens0[0].compare("LEFT")!=0, std::runtime_error,
         "Error, invalid csv calibration parameters file: " << file);
       TEUCHOS_TEST_FOR_EXCEPTION(tokens1[0].compare("RIGHT")!=0, std::runtime_error,
