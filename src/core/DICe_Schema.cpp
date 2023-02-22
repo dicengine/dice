@@ -3412,27 +3412,32 @@ Schema::initialize_cross_correlation(Teuchos::RCP<Triangulation> tri,
       //sf->print_parameters();
       int_t num_iterations = -1;
       // need to create a generic objective since the original schema wont have the rectified images
-      Teuchos::RCP<Objective> obj = Teuchos::rcp(new Objective_ZNSSD(rect_schema.get(),x,y)); // note the x and y coordinates will get truncated to int values
-      Status_Flag corr_status = obj->computeUpdateFast(sf,num_iterations);
-      if(shape_function_params_valid(sf,obj,gamma_tol,-1.0,v_tol,-1.0,corr_status,cross_gamma,cross_sigma)){
-        cv::Point pt1(x,y);
-        cv::circle(left_img_rmp,pt1,5,cv::Scalar(255),3);
-        local_field_value(local_id,SIGMA_FS) = cross_sigma;
-        local_field_value(local_id,GAMMA_FS) = cross_gamma;
-        local_field_value(local_id,MATCH_FS) = 0;
-        local_field_value(local_id,STATUS_FLAG_FS) = corr_status;
-        local_field_value(local_id,ITERATIONS_FS) = num_iterations;
-        sf->map_to_u_v_theta(x,y,cross_u,cross_v,cross_t);
-      }else{
-        DEBUG_MSG("Schema::rectified_correspondences_init(): failed correlation at local id " << local_id);
-        local_field_value(local_id,SIGMA_FS) = -1.0;
-        local_field_value(local_id,GAMMA_FS) = -1.0;
-        local_field_value(local_id,MATCH_FS) = -1;
-        local_field_value(local_id,NEIGHBOR_ID_FS) = -2;
-        local_field_value(local_id,STATUS_FLAG_FS) = corr_status;
-        local_field_value(local_id,ITERATIONS_FS) = num_iterations;
+      Teuchos::RCP<Objective> obj;
+      Status_Flag corr_status = CORRELATION_FAILED;
+      if(x>=0&&x<rect_schema->ref_img()->width()&&y>=0&&y<rect_schema->ref_img()->height()){
+        obj = Teuchos::rcp(new Objective_ZNSSD(rect_schema.get(),x,y)); // note the x and y coordinates will get truncated to int values
+        corr_status = obj->computeUpdateFast(sf,num_iterations);
+        if(shape_function_params_valid(sf,obj,gamma_tol,-1.0,v_tol,-1.0,corr_status,cross_gamma,cross_sigma)){
+          cv::Point pt1(x,y);
+          cv::circle(left_img_rmp,pt1,5,cv::Scalar(255),3);
+          local_field_value(local_id,SIGMA_FS) = cross_sigma;
+          local_field_value(local_id,GAMMA_FS) = cross_gamma;
+          local_field_value(local_id,MATCH_FS) = 0;
+          local_field_value(local_id,STATUS_FLAG_FS) = corr_status;
+          local_field_value(local_id,ITERATIONS_FS) = num_iterations;
+          sf->map_to_u_v_theta(x,y,cross_u,cross_v,cross_t);
+          undist_rect_disp_points[local_id] = cv::Point2f(x+cross_u,y+cross_v);
+          continue;
+        }
       }
       undist_rect_disp_points[local_id] = cv::Point2f(x+cross_u,y+cross_v);
+      DEBUG_MSG("Schema::rectified_correspondences_init(): failed correlation at local id " << local_id);
+      local_field_value(local_id,SIGMA_FS) = -1.0;
+      local_field_value(local_id,GAMMA_FS) = -1.0;
+      local_field_value(local_id,MATCH_FS) = -1;
+      local_field_value(local_id,NEIGHBOR_ID_FS) = -2;
+      local_field_value(local_id,STATUS_FLAG_FS) = corr_status;
+      local_field_value(local_id,ITERATIONS_FS) = num_iterations;
     }
     cv::imwrite(".dice/first_cut.png",left_img_rmp);
 
