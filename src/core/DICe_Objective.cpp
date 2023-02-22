@@ -206,8 +206,8 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
 
   scalar_t int_r_total_2 = 0.0;
   //scalar_t int_r_exact_2 = 0.0;
-  scalar_t int_uhat_dot_g = 0.0;
-  scalar_t int_uhat_dot_jg = 0.0;
+  //scalar_t int_uhat_dot_g = 0.0;
+  //scalar_t int_uhat_dot_jg = 0.0;
 
   scalar_t sssig = 1.0;
 
@@ -266,8 +266,8 @@ Objective::computeUncertaintyFields(Teuchos::RCP<Local_Shape_Function> shape_fun
     scalar_t sub_r_exact = schema_->def_img()->interpolate_keys_fourth(x-offset_x + bx,y-offset_y + by) - (*schema_->ref_img())((int_t)(x-offset_x),(int_t)(y-offset_y));
     //int_r_exact_2 += sub_r_exact*sub_r_exact*one_over_mag_grad_phi_2;
     int_r_total_2 += (sub_r - sub_r_exact)*(sub_r - sub_r_exact)*one_over_mag_grad_phi_2;
-    int_uhat_dot_g += (u*gx + v*gy)/std::sqrt(gx*gx + gy*gy);
-    int_uhat_dot_jg += (-1.0*u*gy + v*gx);
+    //int_uhat_dot_g += (u*gx + v*gy)/std::sqrt(gx*gx + gy*gy);
+    //int_uhat_dot_jg += (-1.0*u*gy + v*gx);
   }
   sssig /= subset_->num_pixels()==0.0?1.0:subset_->num_pixels();
 
