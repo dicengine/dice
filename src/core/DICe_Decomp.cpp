@@ -762,8 +762,8 @@ Decomp::populate_coordinate_vectors(const std::string & image_file_name,
     // load images for each processor
     Teuchos::RCP<Teuchos::ParameterList> imgParams = Teuchos::rcp(new Teuchos::ParameterList());
     imgParams->set(DICe::compute_image_gradients,true);
-    imgParams->set(DICe::subimage_width,max_x-min_x+1);
-    imgParams->set(DICe::subimage_height,max_y-min_y+1);
+    imgParams->set(DICe::subimage_width,max_x-min_x);
+    imgParams->set(DICe::subimage_height,max_y-min_y);
     imgParams->set(DICe::subimage_offset_x,min_x);
     imgParams->set(DICe::subimage_offset_y,min_y);
     Teuchos::RCP<Image> sssig_image = Teuchos::rcp( new Image(image_file_name.c_str(),imgParams));
