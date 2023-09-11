@@ -533,7 +533,7 @@ Calibration::assemble_intersection_object_points() {
       object_points_.push_back(std::vector<cv::Point3f>());
       for (size_t i_cam = 0; i_cam < num_cams(); i_cam++)
         intersection_points_[i_cam].push_back(std::vector<cv::Point2f>());
-      int_t num_common = 0;
+      //int_t num_common = 0;
       //find common points in all cameras
       for (int_t i_x = 0; i_x < num_fiducials_x_; i_x++) {
         for (int_t i_y = 0; i_y < num_fiducials_y_; i_y++) {
@@ -546,7 +546,7 @@ Calibration::assemble_intersection_object_points() {
             }
           }
           if (common_pt) { //save into the image points and objective points for this image set
-            num_common++;
+            //num_common++;
             //fill the intersection and object points for the calibration
             for (size_t i_cam = 0; i_cam < num_cams(); i_cam++) {
               intersection_points_[i_cam][num_included_sets].push_back(image_points_[i_cam][i_image][i_x][i_y]);
