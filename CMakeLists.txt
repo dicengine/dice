@@ -13,6 +13,8 @@ IF(DEFINED DICE_DEVPACK_DIR)
   link_directories(${CLAPACK_DIR}/F2CLIBS)
 ENDIF()
 
+SET(CMAKE_CXX_EXTENSIONS OFF)
+
 # Try to find Trilinos, if path was not given
 IF (NOT DEFINED DICE_TRILINOS_DIR)
   # Losely based on:
@@ -99,6 +101,8 @@ ENDIF()
 
 PROJECT(DICe)
 
+set(CMAKE_CXX_STANDARD 17)
+
 MESSAGE(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 SET(DICE_OUTPUT_PREFIX ${CMAKE_CURRENT_BINARY_DIR})
 MESSAGE(STATUS "The output directory for DICe libraries will be: ${DICE_OUTPUT_PREFIX}/lib")
@@ -151,18 +155,21 @@ set(DICE_ENABLE_NETCDF OFF)
 if(DEFINED NetCDF_DIR)
   set(DICE_ENABLE_NETCDF ON)
   MESSAGE(STATUS "Looking for NetCDF in: ${NetCDF_DIR}")
-  find_library(NetCDF_lib NAMES libnetcdf.a netcdf PATHS ${NetCDF_DIR})
+  find_library(NetCDF_lib NAMES libnetcdf.a libnetcdf_c++.a netcdf PATHS ${NetCDF_DIR})
   MESSAGE(STATUS "Looking for HDF5 in: ${HDF5_DIR}")
   find_library(HDF5_lib NAMES libhdf5.a hdf5 PATHS ${HDF5_DIR} NO_DEFAULT_PATH)  
   find_library(HDF5_lib NAMES libhdf5.a hdf5 PATHS ${HDF5_DIR})  
   find_library(HDF5_hl_lib NAMES libhdf5_hl.a hdf5_hl PATHS ${HDF5_DIR} NO_DEFAULT_PATH)
   find_library(HDF5_hl_lib NAMES libhdf5_hl.a hdf5_hl PATHS ${HDF5_DIR})
+  find_library(sz_lib NAMES libsz.a PATHS ${HDF5_DIR})
   MESSAGE(STATUS "Using NetCDF lib: ${NetCDF_lib}")
   MESSAGE(STATUS "Using HDF5 libs: ${HDF5_lib} ${HDF5_hl_lib}")
+  MESSAGE(STATUS "Using SZIP libs: ${sz_lib}")
   IF(NOT NetCDF_lib_NOTFOUND)
       SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${NetCDF_lib})
       SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${HDF5_lib})
       SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${HDF5_hl_lib})
+      SET(DICE_LIBRARIES ${DICE_LIBRARIES} ${sz_lib})
       ADD_DEFINITIONS(-DDICE_ENABLE_NETCDF=1)
       include_directories(${NetCDF_DIR}/../include)
       link_directories(${NetCDF_DIR}/../lib)
@@ -306,10 +313,10 @@ ENDIF()
 
 SET(DICE_LIBRARIES
     ${DICE_LIBRARIES}
-    teuchoscore
-    teuchosnumerics
-    teuchoscomm
-    teuchosparameterlist
+    ${TeuchosCore_LIBRARIES}
+    ${TeuchosNumerics_LIBRARIES}
+    ${TeuchosComm_LIBRARIES}
+    ${TeuchosParameterList_LIBRARIES}
  )
 
 IF(DICE_ENABLE_GLOBAL)
@@ -317,27 +324,27 @@ IF(DICE_ENABLE_GLOBAL)
   IF(DICE_USE_TPETRA)
     SET(DICE_LIBRARIES
       ${DICE_LIBRARIES}
-      tpetra
-      exodus
-      belos
-      belostpetra
+      ${Tpetra_LIBRARIES}
+      ${SEACAS_LIBRARIES}
+      ${Belos_LIBRARIES}
+      ${BelosTpetra_LIBRARIES}
     )
     ADD_DEFINITIONS(-DDICE_TPETRA=1)
   ELSE()
     SET(DICE_LIBRARIES
       ${DICE_LIBRARIES}
-      epetra
-      exodus
-      belos
-      ifpack
-      belosepetra
+      ${Epetra_LIBRARIES}
+      ${SEACAS_LIBRARIES}
+      ${Belos_LIBRARIES}
+      ${Ifpack_LIBRARIES}
+      ${BelosEpetra_LIBRARIES}
     )
   ENDIF()
 ELSE()
   MESSAGE(STATUS "Global DIC will not be enabled (to enable, set -D DICE_ENABLE_GLOBAL:BOOL=ON in the CMake script)")
   SET(DICE_LIBRARIES
     ${DICE_LIBRARIES}
-    epetra
+    ${Epetra_LIBRARIES}
   )
 ENDIF()
 
@@ -369,13 +376,6 @@ Else()
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fopenmp")
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fopenmp")
   ENDIF()
-  STRING(FIND ${Trilinos_CXX_COMPILER_FLAGS} "c++11" CXX11Found)
-  IF( ${CXX11Found} GREATER -1 )
-    MESSAGE(STATUS "c++11 was enabled in Trilinos so enabling it here. (Found flag at position ${CXX11Found})")
-  ELSE()
-    MESSAGE(WARNING "could not find c++11 flag for Trilinos (c++11 is required)")
-  ENDIF()
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++11")
 endif()
 MESSAGE(STATUS "Trilinos CMAKE_CXX_FLAGS: ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE(STATUS "Trilinos CMAKE_C_FLAGS: ${Trilinos_C_COMPILER_FLAGS}")

@@ -20,7 +20,7 @@ install(TARGETS DICe_Diff
 )
 
 add_executable(DICe_DiffAvg DICe_DiffAvg.cpp)
-target_link_libraries(DICe_DiffAvg ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES} teuchosparameterlist)
+target_link_libraries(DICe_DiffAvg ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES} ${TeuchosParameterList_LIBRARIES})
 
 install(TARGETS DICe_DiffAvg
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
@@ -28,7 +28,7 @@ install(TARGETS DICe_DiffAvg
 
 #if(DICE_ENABLE_GLOBAL)
 #add_executable(DICe_TextToMesh DICe_TextToMesh.cpp)
-#target_link_libraries(DICe_TextToMesh ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES} teuchosparameterlist)
+#target_link_libraries(DICe_TextToMesh ${DICE_LIBRARIES} ${DICE_TEST_LIBRARIES} ${TeuchosParameterList_LIBRARIES})
 #
 #install(TARGETS DICe_TextToMesh
 #  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin

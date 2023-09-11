@@ -150,16 +150,18 @@ IF(DICE_ENABLE_NETCDF)
   find_library(HDF5_lib NAMES libhdf5.a hdf5 PATHS ${HDF5_DIR})
   find_library(HDF5_hl_lib NAMES libhdf5_hl.a hdf5_hl PATHS ${HDF5_DIR} NO_DEFAULT_PATH)
   find_library(HDF5_hl_lib NAMES libhdf5_hl.a hdf5_hl PATHS ${HDF5_DIR})
+  find_library(szip_lib NAMES libsz.a PATHS ${HDF5_DIR})
   MESSAGE(STATUS "Using HDF5 libs: ${HDF5_lib} ${HDF5_hl_lib}")
-  target_link_libraries(main ${HDF5_lib} ${HDF5_hl_lib} ${NetCDF_lib})
+  MESSAGE(STATUS "Using szip libs: ${szip_lib}")
+  target_link_libraries(main ${HDF5_lib} ${HDF5_hl_lib} ${NetCDF_lib} ${szip_lib})
 ENDIF()
 
 IF(DICE_ENABLE_GLOBAL)
   add_definitions(-DDICE_ENABLE_GLOBAL=1)
   target_link_libraries(main
-  exodus
-  ifpack
-  belos)
+  ${SEACAS_LIBRARIES}
+  ${Ifpack_LIBRARIES}
+  ${Belos_LIBRARIES})
 ENDIF()
 
 IF(DICE_ENABLE_OPENCV)
@@ -169,14 +171,14 @@ ENDIF()
   
 # add the other libraries needed
 target_link_libraries(main
-  teuchoscore
-  teuchosnumerics
-  teuchoscomm
-  teuchosparameterlist
+  ${TeuchosCore_LIBRARIES}
+  ${TeuchosNumerics_LIBRARIES}
+  ${TeuchosComm_LIBRARIES}
+  ${TeuchosParameterList_LIBRARIES}
 #  ${tiff_lib}
 )
-target_link_libraries(main epetra)
+target_link_libraries(main ${epetra_LIBRARIES})
 IF(DICE_ENABLE_GLOBAL)
   target_link_libraries(main
-    belosepetra)
+    ${BelosEpetra_LIBRARIES})
 ENDIF()
