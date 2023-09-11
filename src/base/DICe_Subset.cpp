@@ -238,13 +238,13 @@ Subset::max(const Subset_View_Target target){
   scalar_t max = std::numeric_limits<scalar_t>::min();
   if(target==REF_INTENSITIES){
     for(int_t i=0;i<num_pixels_;++i){
-      if(is_active_[i]&!is_deactivated_this_step_[i])
+      if(is_active_[i]&&!is_deactivated_this_step_[i])
         if(ref_intensities_[i]>max)
           max = ref_intensities_[i];
     }
   }else{
     for(int_t i=0;i<num_pixels_;++i)
-      if(is_active_[i]&!is_deactivated_this_step_[i]){
+      if(is_active_[i]&&!is_deactivated_this_step_[i]){
         if(def_intensities_[i]>max)
           max = def_intensities_[i];
       }
@@ -257,13 +257,13 @@ Subset::min(const Subset_View_Target target){
   scalar_t min = std::numeric_limits<scalar_t>::max();
   if(target==REF_INTENSITIES){
     for(int_t i=0;i<num_pixels_;++i){
-      if(is_active_[i]&!is_deactivated_this_step_[i])
+      if(is_active_[i]&&!is_deactivated_this_step_[i])
         if(ref_intensities_[i]<min)
           min = ref_intensities_[i];
     }
   }else{
     for(int_t i=0;i<num_pixels_;++i)
-      if(is_active_[i]&!is_deactivated_this_step_[i]){
+      if(is_active_[i]&&!is_deactivated_this_step_[i]){
         if(def_intensities_[i]<min)
           min = def_intensities_[i];
       }
@@ -288,12 +288,12 @@ Subset::mean(const Subset_View_Target target){
   int_t num_active = num_active_pixels();
   if(target==REF_INTENSITIES){
     for(int_t i=0;i<num_pixels_;++i){
-      if(is_active_[i]&!is_deactivated_this_step_[i])
+      if(is_active_[i]&&!is_deactivated_this_step_[i])
         mean += ref_intensities_[i];
     }
   }else{
     for(int_t i=0;i<num_pixels_;++i)
-      if(is_active_[i]&!is_deactivated_this_step_[i]){
+      if(is_active_[i]&&!is_deactivated_this_step_[i]){
         mean += def_intensities_[i];
       }
   }
@@ -307,12 +307,12 @@ Subset::mean(const Subset_View_Target target,
   sum = 0.0;
   if(target==REF_INTENSITIES){
     for(int_t i=0;i<num_pixels_;++i){
-      if(is_active_[i]&!is_deactivated_this_step_[i])
+      if(is_active_[i]&&!is_deactivated_this_step_[i])
         sum += (ref_intensities_[i]-mean_)*(ref_intensities_[i]-mean_);
     }
   }else{
     for(int_t i=0;i<num_pixels_;++i){
-      if(is_active_[i]&!is_deactivated_this_step_[i])
+      if(is_active_[i]&&!is_deactivated_this_step_[i])
         sum += (def_intensities_[i]-mean_)*(def_intensities_[i]-mean_);
     }
   }
@@ -331,7 +331,7 @@ Subset::gamma(){
   scalar_t gamma = 0.0;
   scalar_t value = 0.0;
   for(int_t i=0;i<num_pixels_;++i){
-    if(is_active_[i]&!is_deactivated_this_step_[i]){
+    if(is_active_[i]&&!is_deactivated_this_step_[i]){
       value = (def_intensities_[i]-mean_def)/mean_sum_def - (ref_intensities_[i]-mean_ref)/mean_sum_ref;
       gamma += value*value;
     }

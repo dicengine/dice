@@ -4637,7 +4637,7 @@ Schema::write_deformed_subsets_image(const bool use_gamma_as_color){
       // offset the pixel locations by the sub image offsets
       if(px>=0&&px<w&&py>=0&&py<h){
         if(use_gamma_as_color){
-          if(ref_subset->is_active(i)&!ref_subset->is_deactivated_this_step(i)){
+          if(ref_subset->is_active(i)&&!ref_subset->is_deactivated_this_step(i)){
             pixel_gamma =  (ref_subset->def_intensities(i)-mean_def)/mean_sum_def - (ref_subset->ref_intensities(i)-mean_ref)/mean_sum_ref;
             intensities[py*w+px] = pixel_gamma*pixel_gamma*10000.0;
           }
