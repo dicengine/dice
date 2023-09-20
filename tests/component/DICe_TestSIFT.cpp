@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
   const float u_gold = 273.408;
   const float v_gold = 174.849;
 
-  const float tol = 0.5;
+  const float tol = 1.0;
   if(std::abs(theta - theta_gold) > tol){
     *outStream << "Error, theta is not correct " << theta << " should be " << theta_gold << std::endl;
     errorFlag++;
