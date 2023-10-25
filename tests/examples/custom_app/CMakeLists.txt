@@ -153,7 +153,10 @@ IF(DICE_ENABLE_NETCDF)
   find_library(szip_lib NAMES libsz.a PATHS ${HDF5_DIR})
   MESSAGE(STATUS "Using HDF5 libs: ${HDF5_lib} ${HDF5_hl_lib}")
   MESSAGE(STATUS "Using szip libs: ${szip_lib}")
-  target_link_libraries(main ${HDF5_lib} ${HDF5_hl_lib} ${NetCDF_lib} ${szip_lib})
+  target_link_libraries(main ${HDF5_lib} ${HDF5_hl_lib} ${NetCDF_lib})
+  IF(szip_lib)
+    target_link_libraries(main ${szip_lib})
+  ENDIF()
 ENDIF()
 
 IF(DICE_ENABLE_GLOBAL)
@@ -162,6 +165,9 @@ IF(DICE_ENABLE_GLOBAL)
   ${SEACAS_LIBRARIES}
   ${Ifpack_LIBRARIES}
   ${Belos_LIBRARIES})
+  IF(${Trilinos_VERSION_MAJOR} LESS_EQUAL 13)
+    target_link_libraries(main exodus)
+  ENDIF()
 ENDIF()
 
 IF(DICE_ENABLE_OPENCV)
