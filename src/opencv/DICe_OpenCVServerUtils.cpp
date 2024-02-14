@@ -737,6 +737,7 @@ int_t opencv_dot_targets(Mat & img,
     if (mingray > curgray) mingray = curgray;
   }
   i_thresh = (maxgray + mingray) / 2;
+  DEBUG_MSG("  setting the threshold based on the average gray value between two of the donut dots");
   DEBUG_MSG("  min gray value (inside target keypoints): " << mingray << " max gray value: " << maxgray);
   DEBUG_MSG("  getting the rest of the dots using average gray intensity value as threshold");
   DEBUG_MSG("    threshold to get dots: " << i_thresh);
@@ -745,11 +746,20 @@ int_t opencv_dot_targets(Mat & img,
   options.set<bool>("donut_test",false);
   std::vector<KeyPoint> dots;
   get_dot_markers(img_cpy, dots, i_thresh, !invert,options,min_blob_size);
-  const int_t num_dots = dots.size();
+  int_t num_dots = dots.size();
+  
   DEBUG_MSG("    prospective grid points found: " << num_dots);
   if(num_dots <= 0){
     std::cout << "opencv_dot_targets(): zero dots found" << std::endl;
     return 1;
+  }
+  if(num_dots < num_fiducials_x*num_fiducials_y*0.7){
+    DEBUG_MSG("  not enough dots found with the average gray value between donut dots, using the original threshold instead");
+    i_thresh = return_thresh;
+    DEBUG_MSG("  set threshold to: " << i_thresh);
+    dots.clear();
+    get_dot_markers(img_cpy, dots, i_thresh, !invert,options,min_blob_size);
+    num_dots = dots.size();
   }
   for (int_t n = 0; n < num_dots; n++) {
     if(img.size().height>800){
@@ -759,7 +769,9 @@ int_t opencv_dot_targets(Mat & img,
     }
   }
   // TODO filter the dot markers (for example by size)
-
+  //cv::imwrite("./DEBUG_OUTPUT.png",img);
+  //assert(false);
+  
   // reorder the keypoints into an origin, xaxis, yaxis order
   reorder_keypoints(key_points,dots);
   DEBUG_MSG("    ordered keypoints: ");
@@ -1079,6 +1091,7 @@ void get_dot_markers(cv::Mat img,
   Mat labelImage(img.size(),CV_32S);
   Mat stats, centroids;
   int nLabels = 0;
+  //cv::imwrite("./NOT_SOURCE.png",not_src);
 
   // detect dots on the appropriately inverted image
   if (invert){
